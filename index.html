@@ -25,7 +25,7 @@
         <div id="content" style="display:none;">
             <div class="bal-val" id="balance">--</div>
             <div class="status">Академические ₽</div>
-            <a href="https://t.me/твой_аккаунт_менеджера" class="btn">💳 Пополнить</a>
+            <a href="https://t.me/DisciplineLover" class="btn">💳 Пополнить</a>
         </div>
         <div class="info" id="user-info">ID: ...</div>
     </div>
@@ -35,9 +35,8 @@
         const userId = tg.initDataUnsafe.user.id;
         document.getElementById('user-info').innerText = "Ваш ID: " + userId;
 
-        // --- БЛОК СИНХРОНИЗАЦИИ ---
-        // Замени на URL твоего второго Webhook n8n (get-balance)
-        const https://n8n55555.hostkey.in/webhook/get-balance = 'https://discipline-g.webhook.office.n8n.io/get-balance'; 
+        // ИСПРАВЛЕННАЯ ПЕРЕМЕННАЯ
+        const N8N_URL_GET_BALANCE = 'https://n8n55555.hostkey.in/webhook/get-balance'; 
 
         fetch(`${N8N_URL_GET_BALANCE}?id=${userId}`)
             .then(response => response.json())
