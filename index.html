@@ -7,7 +7,6 @@
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 
     <style>
         :root {
@@ -44,7 +43,11 @@
         .balance-value { color: var(--button-color); }
         .streak-value { color: var(--accent-fire); }
 
-        #lottie-fire { width: 60px; height: 60px; margin: 0 auto; }
+        /* Нативный CSS-Огонь */
+        .fire-icon { font-size: 48px; text-align: center; margin: 5px 0; transition: all 0.3s ease; }
+        .fire-active { animation: pulse 1.5s infinite alternate; filter: drop-shadow(0 0 15px rgba(255, 149, 0, 0.6)); }
+        .fire-dead { filter: grayscale(100%) opacity(0.3); }
+        @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
 
         .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
         .btn {
@@ -72,7 +75,7 @@
             </div>
             <div class="metric-card">
                 <h2>Серия</h2>
-                <div id="lottie-fire"></div>
+                <div class="fire-icon" id="ui-fire">🔥</div>
                 <div class="metric-value streak-value" id="ui-streak">...</div>
                 <div style="font-size: 12px; color: var(--hint-color);">дней подряд</div>
             </div>
@@ -80,9 +83,7 @@
         
         <div class="action-buttons" style="flex-wrap: wrap;">
             <button class="btn" style="flex-basis: 100%; margin-bottom: 10px;" onclick="tg.showAlert('Интеграция платежного шлюза Ю-Касса в процессе. Скоро пополнение станет автоматическим!')">Пополнить баланс</button>
-            
             <button class="btn btn-secondary" onclick="tg.openTelegramLink('https://t.me/DisciplineLover')">Поддержка</button>
-            
             <button class="btn btn-secondary" onclick="tg.showAlert('ЧАСТЫЕ ВОПРОСЫ:\n\n1. Аудит стоит 50 акад. рублей.\n2. ИИ проверяет по жестким критериям ФИПИ.\n3. Серия побед (огонек) сгорает, если не отправлять работы 24 часа.')">FAQ</button>
         </div>
     </div>
@@ -108,38 +109,23 @@
         tg.ready();
 
         const user = tg.initDataUnsafe?.user;
-        const chatId = user ? user.id : '123456789'; // Для локальных тестов
+        const chatId = user ? user.id : '123456789'; // Fallback для тестов
 
-        // ⚠️ ВСТАВЬ СЮДА СВОЙ PRODUCTION URL ИЗ N8N WEBHOOK
         const N8N_API_URL = 'https://45.131.183.101.nip.io/webhook/get-user-data';
-
-        const fireAnimation = lottie.loadAnimation({
-            container: document.getElementById('lottie-fire'),
-            renderer: 'svg',
-            loop: true,
-            autoplay: true, // Принудительно стартуем
-            // Максимально стабильный URL от LottieFiles
-            path: 'https://assets8.lottiefiles.com/packages/lf20_j3txvxcq.json' 
-        });
 
         async function fetchDashboardData() {
             try {
-                // 1. Стучимся в твой боевой сервер за балансом и серией
                 const response = await fetch(`${N8N_API_URL}?chat_id=${chatId}`);
-                if (!response.ok) throw new Error('Network response was not ok');
+                if (!response.ok) throw new Error('Сбой сети');
                 const apiData = await response.json();
                 
-                // 2. Склеиваем реальные деньги с заглушками для графиков
-                // Графики станут реальными, когда мы допишем API в n8n для таблицы audit_logs
+                // Передача строго реальных данных из базы
                 const data = {
                     balance: apiData.balance ?? 0,
                     streak_count: apiData.streak_count ?? 0,
-                    trend_scores: [12, 14, 15, 15, 18, 17, 20, 21], 
-                    radar_scores: [85, 90, 70, 80, 95], 
-                    history: [
-                        { date: '04.04.2026', score: 21 },
-                        { date: '03.04.2026', score: 20 }
-                    ]
+                    trend_scores: apiData.trend_scores || [], 
+                    radar_scores: apiData.radar_scores || [100, 100, 100, 100, 100], 
+                    history: apiData.history || []
                 };
 
                 updateUI(data);
@@ -152,25 +138,33 @@
         }
 
         function updateUI(data) {
-            document.getElementById('ui-balance').innerText = data.balance;
+            document.getElementById('ui-balance').innerText = Math.floor(data.balance);
             document.getElementById('ui-streak').innerText = data.streak_count;
 
-            if (data.streak_count === 0) {
-                fireAnimation.pause();
-                document.getElementById('lottie-fire').style.opacity = '0.3';
-                document.getElementById('lottie-fire').style.filter = 'grayscale(100%)';
+            const fireEl = document.getElementById('ui-fire');
+            if (data.streak_count > 0) {
+                fireEl.classList.add('fire-active');
+                fireEl.classList.remove('fire-dead');
+            } else {
+                fireEl.classList.add('fire-dead');
+                fireEl.classList.remove('fire-active');
             }
 
             const historyContainer = document.getElementById('history-feed');
             historyContainer.innerHTML = '';
-            data.history.forEach(item => {
-                historyContainer.innerHTML += `
-                    <div class="history-item">
-                        <span class="history-date">${item.date}</span>
-                        <span class="history-score">${item.score}/22</span>
-                    </div>
-                `;
-            });
+            
+            if (data.history.length === 0) {
+                historyContainer.innerHTML = '<div style="text-align: center; color: var(--hint-color); font-size: 14px;">Работы еще не загружены</div>';
+            } else {
+                data.history.forEach(item => {
+                    historyContainer.innerHTML += `
+                        <div class="history-item">
+                            <span class="history-date">${item.date}</span>
+                            <span class="history-score">${item.score}/22</span>
+                        </div>
+                    `;
+                });
+            }
 
             renderCharts(data.trend_scores, data.radar_scores);
         }
