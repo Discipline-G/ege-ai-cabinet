@@ -119,12 +119,11 @@
                 if (!response.ok) throw new Error('Сбой сети');
                 const apiData = await response.json();
                 
-                // Передача строго реальных данных из базы
                 const data = {
                     balance: apiData.balance ?? 0,
                     streak_count: apiData.streak_count ?? 0,
                     trend_scores: apiData.trend_scores || [], 
-                    radar_scores: apiData.radar_scores || [100, 100, 100, 100, 100], 
+                    radar_scores: apiData.radar_scores || [100, 100, 100, 100, 100, 100], 
                     history: apiData.history || []
                 };
 
@@ -185,10 +184,31 @@
             new Chart(document.getElementById('radarChart'), {
                 type: 'radar',
                 data: {
-                    labels: ['Орфография', 'Пунктуация', 'Грамматика', 'Речь', 'Логика'],
+                    labels: ['Орфография', 'Пунктуация', 'Грамматика', 'Речь', 'Логика', 'Факты'],
                     datasets: [{ label: 'Компетенции (%)', data: radarData, backgroundColor: 'rgba(255, 149, 0, 0.2)', borderColor: '#FF9500', pointBackgroundColor: '#FF9500', borderWidth: 2 }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { r: { angleLines: { color: 'rgba(142, 142, 147, 0.2)' }, grid: { color: 'rgba(142, 142, 147, 0.2)' }, pointLabels: { font: { size: 11 }, color: 'var(--text-color)' }, ticks: { display: false, min: 0, max: 100 } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        r: {
+                            min: 0, 
+                            max: 100,
+                            beginAtZero: true,
+                            angleLines: { color: 'rgba(142, 142, 147, 0.2)' },
+                            grid: { color: 'rgba(142, 142, 147, 0.2)' },
+                            pointLabels: { 
+                                font: { size: 10, weight: '600' }, 
+                                color: 'var(--text-color)' 
+                            },
+                            ticks: { 
+                                display: false, 
+                                stepSize: 20 
+                            }
+                        }
+                    }
+                }
             });
         }
 
