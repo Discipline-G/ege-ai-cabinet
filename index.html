@@ -6,13 +6,10 @@
     <title>Metascore Dashboard</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 
     <style>
-        /* Базовые стили и интеграция темы Telegram */
         :root {
             --bg-color: var(--tg-theme-bg-color, #1c1c1e);
             --text-color: var(--tg-theme-text-color, #ffffff);
@@ -27,111 +24,41 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            margin: 0;
-            padding: 16px;
-            box-sizing: border-box;
+            margin: 0; padding: 16px; box-sizing: border-box;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Контейнеры - Матрешка */
         .section {
             background-color: var(--secondary-bg);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 16px; padding: 20px;
+            margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        h2 {
-            margin-top: 0;
-            font-size: 18px;
-            color: var(--hint-color);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 16px;
-        }
+        h2 { font-size: 18px; color: var(--hint-color); text-transform: uppercase; margin: 0 0 16px 0; }
 
-        /* Блок Баланса и Серии */
-        .top-metrics {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .metric-card {
-            flex: 1;
-            text-align: center;
-        }
-
-        .metric-card:first-child {
-            border-right: 1px solid var(--hint-color);
-        }
-
-        .metric-value {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 8px 0;
-        }
-
+        .top-metrics { display: flex; justify-content: space-between; align-items: center; }
+        .metric-card { flex: 1; text-align: center; }
+        .metric-card:first-child { border-right: 1px solid rgba(142, 142, 147, 0.3); }
+        .metric-value { font-size: 32px; font-weight: 700; margin: 8px 0; }
+        
         .balance-value { color: var(--button-color); }
         .streak-value { color: var(--accent-fire); }
 
-        /* Контейнер для анимации Lottie */
-        #lottie-fire {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto;
-        }
+        #lottie-fire { width: 60px; height: 60px; margin: 0 auto; }
 
-        /* Кнопки действий */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
+        .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
         .btn {
-            flex: 1;
-            background-color: var(--button-color);
-            color: var(--button-text-color);
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
+            flex: 1; background-color: var(--button-color); color: var(--button-text-color);
+            border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
         }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--button-color); color: var(--button-color); }
 
-        .btn-secondary {
-            background-color: transparent;
-            border: 1px solid var(--button-color);
-            color: var(--button-color);
-        }
+        .chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 20px; }
 
-        /* Графики */
-        .chart-container {
-            position: relative;
-            height: 250px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        /* Лента истории */
-        .history-item {
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(142, 142, 147, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .history-item { padding: 12px 0; border-bottom: 1px solid rgba(142, 142, 147, 0.2); display: flex; justify-content: space-between; }
         .history-item:last-child { border-bottom: none; padding-bottom: 0; }
         .history-date { font-size: 14px; color: var(--hint-color); }
         .history-score { font-weight: bold; font-size: 16px; }
-
-        /* Утилиты */
-        .loading { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -140,83 +67,78 @@
         <div class="top-metrics">
             <div class="metric-card">
                 <h2>Баланс</h2>
-                <div class="metric-value balance-value" id="ui-balance">--</div>
+                <div class="metric-value balance-value" id="ui-balance">...</div>
                 <div style="font-size: 12px; color: var(--hint-color);">акад. рублей</div>
             </div>
             <div class="metric-card">
                 <h2>Серия</h2>
                 <div id="lottie-fire"></div>
-                <div class="metric-value streak-value" id="ui-streak">--</div>
+                <div class="metric-value streak-value" id="ui-streak">...</div>
                 <div style="font-size: 12px; color: var(--hint-color);">дней подряд</div>
             </div>
         </div>
         
-        <div class="action-buttons">
-            <button class="btn" onclick="tg.close()">В бота</button>
-            <a href="#" class="btn btn-secondary">Поддержка</a>
+        <div class="action-buttons" style="flex-wrap: wrap;">
+            <button class="btn" style="flex-basis: 100%; margin-bottom: 10px;" onclick="tg.showAlert('Интеграция платежного шлюза Ю-Касса в процессе. Скоро пополнение станет автоматическим!')">Пополнить баланс</button>
+            
+            <button class="btn btn-secondary" onclick="tg.openTelegramLink('https://t.me/DisciplineLover')">Поддержка</button>
+            
+            <button class="btn btn-secondary" onclick="tg.showAlert('ЧАСТЫЕ ВОПРОСЫ:\n\n1. Аудит стоит 50 акад. рублей.\n2. ИИ проверяет по жестким критериям ФИПИ.\n3. Серия побед (огонек) сгорает, если не отправлять работы 24 часа.')">FAQ</button>
         </div>
     </div>
 
     <div class="section">
         <h2>Динамика баллов</h2>
-        <div class="chart-container">
-            <canvas id="trendChart"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="trendChart"></canvas></div>
     </div>
 
     <div class="section">
         <h2>Компетенции</h2>
-        <div class="chart-container">
-            <canvas id="radarChart"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="radarChart"></canvas></div>
     </div>
 
     <div class="section">
         <h2>Последние работы</h2>
-        <div id="history-feed">
-            <div style="text-align: center; color: var(--hint-color); font-size: 14px;">Загрузка истории...</div>
-        </div>
+        <div id="history-feed"><div style="text-align: center; color: var(--hint-color); font-size: 14px;">Загрузка истории...</div></div>
     </div>
 
     <script>
-        // --- 1. ИНИЦИАЛИЗАЦИЯ TELEGRAM ---
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем на полный экран
+        tg.expand(); 
         tg.ready();
 
         const user = tg.initDataUnsafe?.user;
-        const chatId = user ? user.id : 'TEST_USER_123'; // Fallback для тестов в браузере
+        const chatId = user ? user.id : '123456789'; // Для локальных тестов
 
-        // ВАЖНО: ЗАМЕНИТЬ НА URL ТВОЕГО N8N WEBHOOK
-        const N8N_API_URL = 'https://ТВОЙ_N8N_СЕРВЕР/webhook/get-user-data';
+        // ⚠️ ВСТАВЬ СЮДА СВОЙ PRODUCTION URL ИЗ N8N WEBHOOK
+        const N8N_API_URL = 'https://ТВОЙ_СЕРВЕР/webhook/get-user-data';
 
-        // --- 2. ИНИЦИАЛИЗАЦИЯ АНИМАЦИИ ОГНЯ ---
         const fireAnimation = lottie.loadAnimation({
             container: document.getElementById('lottie-fire'),
             renderer: 'svg',
             loop: true,
-            autoplay: false, // Включим, если серия > 0
-            // Публичная ссылка на простую анимацию огня для MVP
-            path: 'https://assets9.lottiefiles.com/packages/lf20_hx7qexnj.json' 
+            autoplay: true, // Принудительно стартуем
+            // Максимально стабильный URL от LottieFiles
+            path: 'https://assets8.lottiefiles.com/packages/lf20_j3txvxcq.json' 
         });
 
-        // --- 3. ЛОГИКА СБОРА ДАННЫХ ---
         async function fetchDashboardData() {
             try {
-                // Пытаемся получить реальные данные
-                // const response = await fetch(`${N8N_API_URL}?chat_id=${chatId}`);
-                // const data = await response.json();
+                // 1. Стучимся в твой боевой сервер за балансом и серией
+                const response = await fetch(`${N8N_API_URL}?chat_id=${chatId}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const apiData = await response.json();
                 
-                // ВРЕМЕННЫЙ MOCK (Удали этот блок и раскомментируй код выше, когда подключишь n8n)
+                // 2. Склеиваем реальные деньги с заглушками для графиков
+                // Графики станут реальными, когда мы допишем API в n8n для таблицы audit_logs
                 const data = {
-                    balance: 950,
-                    streak_count: 5,
-                    trend_scores: [12, 14, 15, 15, 18, 17, 20, 21],
-                    radar_scores: [85, 90, 70, 80, 95], // Орфография, Пунктуация, Грамматика, Речь, Логика
+                    balance: apiData.balance ?? 0,
+                    streak_count: apiData.streak_count ?? 0,
+                    trend_scores: [12, 14, 15, 15, 18, 17, 20, 21], 
+                    radar_scores: [85, 90, 70, 80, 95], 
                     history: [
                         { date: '04.04.2026', score: 21 },
-                        { date: '03.04.2026', score: 20 },
-                        { date: '01.04.2026', score: 17 }
+                        { date: '03.04.2026', score: 20 }
                     ]
                 };
 
@@ -225,23 +147,20 @@
             } catch (error) {
                 console.error('Ошибка API:', error);
                 document.getElementById('ui-balance').innerText = 'Err';
+                document.getElementById('ui-streak').innerText = 'Err';
             }
         }
 
-        // --- 4. ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ---
         function updateUI(data) {
-            // Текст
             document.getElementById('ui-balance').innerText = data.balance;
             document.getElementById('ui-streak').innerText = data.streak_count;
 
-            // Логика огня: если серия есть, огонь горит. Если нет - ставим на паузу/делаем тусклым.
-            if (data.streak_count > 0) {
-                fireAnimation.play();
-            } else {
+            if (data.streak_count === 0) {
+                fireAnimation.pause();
                 document.getElementById('lottie-fire').style.opacity = '0.3';
+                document.getElementById('lottie-fire').style.filter = 'grayscale(100%)';
             }
 
-            // Рендер истории
             const historyContainer = document.getElementById('history-feed');
             historyContainer.innerHTML = '';
             data.history.forEach(item => {
@@ -253,74 +172,33 @@
                 `;
             });
 
-            // Рендер Графиков
             renderCharts(data.trend_scores, data.radar_scores);
         }
 
-        // --- 5. ОТРИСОВКА ГРАФИКОВ (Chart.js) ---
         function renderCharts(trendData, radarData) {
             Chart.defaults.color = 'var(--hint-color)';
             Chart.defaults.font.family = '-apple-system, sans-serif';
 
-            // Линейный график
             new Chart(document.getElementById('trendChart'), {
                 type: 'line',
                 data: {
                     labels: trendData.map((_, i) => `#${i+1}`),
-                    datasets: [{
-                        label: 'Баллы',
-                        data: trendData,
-                        borderColor: '#007aff',
-                        backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.4, // Плавные изгибы
-                        fill: true,
-                        pointBackgroundColor: '#007aff'
-                    }]
+                    datasets: [{ label: 'Баллы', data: trendData, borderColor: '#007aff', backgroundColor: 'rgba(0, 122, 255, 0.1)', borderWidth: 3, tension: 0.4, fill: true, pointBackgroundColor: '#007aff' }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { min: 0, max: 22, ticks: { stepSize: 5 } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 22, ticks: { stepSize: 5 } } } }
             });
 
-            // Радарный график
             new Chart(document.getElementById('radarChart'), {
                 type: 'radar',
                 data: {
                     labels: ['Орфография', 'Пунктуация', 'Грамматика', 'Речь', 'Логика'],
-                    datasets: [{
-                        label: 'Компетенции (%)',
-                        data: radarData,
-                        backgroundColor: 'rgba(255, 149, 0, 0.2)',
-                        borderColor: '#FF9500',
-                        pointBackgroundColor: '#FF9500',
-                        borderWidth: 2
-                    }]
+                    datasets: [{ label: 'Компетенции (%)', data: radarData, backgroundColor: 'rgba(255, 149, 0, 0.2)', borderColor: '#FF9500', pointBackgroundColor: '#FF9500', borderWidth: 2 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        r: {
-                            angleLines: { color: 'rgba(142, 142, 147, 0.2)' },
-                            grid: { color: 'rgba(142, 142, 147, 0.2)' },
-                            pointLabels: { font: { size: 11 }, color: 'var(--text-color)' },
-                            ticks: { display: false, min: 0, max: 100 }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { r: { angleLines: { color: 'rgba(142, 142, 147, 0.2)' }, grid: { color: 'rgba(142, 142, 147, 0.2)' }, pointLabels: { font: { size: 11 }, color: 'var(--text-color)' }, ticks: { display: false, min: 0, max: 100 } } } }
             });
         }
 
-        // Запуск
         fetchDashboardData();
-
     </script>
 </body>
 </html>
