@@ -16,14 +16,13 @@
             --button-color: var(--tg-theme-button-color, #007aff);
             --button-text-color: var(--tg-theme-button-text-color, #ffffff);
             --secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
-            --accent-fire: #FF9500; /* Яркий оранжевый для темной темы */
+            --accent-fire: #FF9500;
             --radar-fill: rgba(255, 149, 0, 0.2);
         }
 
-        /* Автоматическая адаптация под светлую тему Telegram для читаемости */
         @media (prefers-color-scheme: light) {
             :root {
-                --accent-fire: #E65100; /* Глубокий темно-оранжевый для белого фона */
+                --accent-fire: #E65100;
                 --hint-color: #666666;
                 --radar-fill: rgba(230, 81, 0, 0.15);
             }
@@ -53,17 +52,17 @@
         .balance-value { color: var(--button-color); }
         .streak-value { color: var(--accent-fire); }
 
-        /* Нативный CSS-Огонь */
         .fire-icon { font-size: 48px; text-align: center; margin: 5px 0; transition: all 0.3s ease; }
         .fire-active { animation: pulse 1.5s infinite alternate; filter: drop-shadow(0 0 15px var(--accent-fire)); }
         .fire-dead { filter: grayscale(100%) opacity(0.3); }
         @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
 
-        .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .btn {
             flex: 1; background-color: var(--button-color); color: var(--button-text-color);
             border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
         }
+        .btn-full { flex-basis: 100%; margin-bottom: 10px; }
         .btn-secondary { background-color: transparent; border: 1px solid var(--button-color); color: var(--button-color); }
 
         .chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 20px; }
@@ -91,8 +90,8 @@
             </div>
         </div>
         
-        <div class="action-buttons" style="flex-wrap: wrap;">
-            <button class="btn" style="flex-basis: 100%; margin-bottom: 10px;" onclick="requestPayment()">Пополнить баланс</button>
+        <div class="action-buttons">
+            <button class="btn btn-full" onclick="requestPayment()">Пополнить баланс</button>
             <button class="btn btn-secondary" onclick="tg.openTelegramLink('https://t.me/DisciplineLover')">Поддержка</button>
             <button class="btn btn-secondary" onclick="showFAQ()">FAQ</button>
         </div>
@@ -119,9 +118,14 @@
         tg.ready();
 
         const user = tg.initDataUnsafe?.user;
-        const chatId = user ? user.id : '123456789';
+        const chatId = user ? user.id : '5689158489'; // Дефолтный ID для тестов в браузере
 
-        const N8N_API_URL = 'https://45.131.183.101.nip.io/webhook/get-user-data';
+        // АРХИТЕКТУРНАЯ ПРАВКА: Актуальный домен sslip.io
+        const N8N_API_URL = 'https://45.131.183.101.sslip.io/webhook/get-user-data';
+
+        // Инициализация переменных для Chart.js (чтобы избежать утечки памяти)
+        let trendChartInstance = null;
+        let radarChartInstance = null;
 
         function showFAQ() {
             const faqText = 'ЧАСТЫЕ ВОПРОСЫ:\n\n1. Аудит стоит 50 акад. рублей.\n2. ИИ проверяет по жестким критериям ФИПИ.\n3. Серия (огонек) сгорает при простое 24 часа.\n4. ВАЖНО: Если сочинение на нескольких листах, загружайте их строго по порядку (одним альбомом).';
@@ -129,23 +133,24 @@
         }
 
         function requestPayment() {
-            // Элегантный UX: предупреждаем пользователя и закрываем WebApp
-            tg.showAlert('Для пополнения баланса закройте Личный кабинет и отправьте боту сообщение "Оплатить" или нажмите на соответствующую кнопку в меню бота.', function() {
+            tg.showAlert('Для пополнения баланса закройте Личный кабинет и отправьте боту сообщение "Оплатить".', function() {
                 tg.close();
             });
         }
 
         async function fetchDashboardData() {
             try {
-                const response = await fetch(`${N8N_API_URL}?chat_id=${chatId}`);
-                if (!response.ok) throw new Error('Сбой сети');
+                // Добавлен кэш-бастер (&t=) для форсирования обновления данных
+                const response = await fetch(`${N8N_API_URL}?chat_id=${chatId}&t=${Date.now()}`);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                
                 const apiData = await response.json();
                 
                 const data = {
                     balance: apiData.balance ?? 0,
                     streak_count: apiData.streak_count ?? 0,
                     trend_scores: apiData.trend_scores || [], 
-                    radar_scores: apiData.radar_scores || [100, 100, 100, 100, 100, 100], 
+                    radar_scores: apiData.radar_scores || [0, 0, 0, 0, 0, 0], 
                     history: apiData.history || []
                 };
 
@@ -155,6 +160,7 @@
                 console.error('Ошибка API:', error);
                 document.getElementById('ui-balance').innerText = 'Err';
                 document.getElementById('ui-streak').innerText = 'Err';
+                document.getElementById('history-feed').innerHTML = `<div style="text-align: center; color: #ff3b30; font-size: 14px;">Ошибка загрузки. Проверьте соединение с сервером.</div>`;
             }
         }
 
@@ -191,28 +197,47 @@
         }
 
         function renderCharts(trendData, radarData) {
-            Chart.defaults.color = 'var(--hint-color)';
-            Chart.defaults.font.family = '-apple-system, sans-serif';
+            // АРХИТЕКТУРНАЯ ПРАВКА: Уничтожение старых холстов перед новой отрисовкой
+            if (trendChartInstance) trendChartInstance.destroy();
+            if (radarChartInstance) radarChartInstance.destroy();
 
-            // Получаем динамический цвет для графиков
+            Chart.defaults.color = 'var(--hint-color)';
+            Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
             const computedStyle = getComputedStyle(document.documentElement);
             const fireColor = computedStyle.getPropertyValue('--accent-fire').trim();
             const fillPattern = computedStyle.getPropertyValue('--radar-fill').trim();
 
-            new Chart(document.getElementById('trendChart'), {
+            trendChartInstance = new Chart(document.getElementById('trendChart'), {
                 type: 'line',
                 data: {
                     labels: trendData.map((_, i) => `#${i+1}`),
-                    datasets: [{ label: 'Баллы', data: trendData, borderColor: '#007aff', backgroundColor: 'rgba(0, 122, 255, 0.1)', borderWidth: 3, tension: 0.4, fill: true, pointBackgroundColor: '#007aff' }]
+                    datasets: [{ 
+                        label: 'Баллы', 
+                        data: trendData, 
+                        borderColor: '#007aff', 
+                        backgroundColor: 'rgba(0, 122, 255, 0.1)', 
+                        borderWidth: 3, 
+                        tension: 0.4, 
+                        fill: true, 
+                        pointBackgroundColor: '#007aff' 
+                    }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 22, ticks: { stepSize: 5 } } } }
             });
 
-            new Chart(document.getElementById('radarChart'), {
+            radarChartInstance = new Chart(document.getElementById('radarChart'), {
                 type: 'radar',
                 data: {
                     labels: ['Орфография', 'Пунктуация', 'Грамматика', 'Речь', 'Логика', 'Факты'],
-                    datasets: [{ label: 'Компетенции (%)', data: radarData, backgroundColor: fillPattern, borderColor: fireColor, pointBackgroundColor: fireColor, borderWidth: 2 }]
+                    datasets: [{ 
+                        label: 'Компетенции (%)', 
+                        data: radarData, 
+                        backgroundColor: fillPattern, 
+                        borderColor: fireColor, 
+                        pointBackgroundColor: fireColor, 
+                        borderWidth: 2 
+                    }]
                 },
                 options: {
                     responsive: true,
