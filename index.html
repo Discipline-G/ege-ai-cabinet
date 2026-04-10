@@ -10,22 +10,16 @@
 
     <style>
         :root {
+            /* Базовые цвета Telegram */
             --bg-color: var(--tg-theme-bg-color, #1c1c1e);
             --text-color: var(--tg-theme-text-color, #ffffff);
             --hint-color: var(--tg-theme-hint-color, #8e8e93);
-            --button-color: var(--tg-theme-button-color, #007aff);
-            --button-text-color: var(--tg-theme-button-text-color, #ffffff);
             --secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
+            
+            /* Динамические цвета (меняются JS-ом) */
+            --primary-color: #0A84FF; /* По умолчанию синий ЕГЭ */
+            --primary-transparent: rgba(10, 132, 255, 0.15);
             --accent-fire: #FF9500;
-            --radar-fill: rgba(255, 149, 0, 0.2);
-        }
-
-        @media (prefers-color-scheme: light) {
-            :root {
-                --accent-fire: #E65100;
-                --hint-color: #666666;
-                --radar-fill: rgba(230, 81, 0, 0.15);
-            }
         }
 
         body {
@@ -34,6 +28,33 @@
             color: var(--text-color);
             margin: 0; padding: 16px; box-sizing: border-box;
             -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Переключатель Экзаменов */
+        .exam-toggle {
+            display: flex;
+            background-color: rgba(142, 142, 147, 0.12);
+            border-radius: 9px;
+            padding: 3px;
+            margin-bottom: 20px;
+        }
+        .exam-toggle button {
+            flex: 1;
+            padding: 8px 0;
+            border: none;
+            background: transparent;
+            color: var(--hint-color);
+            border-radius: 7px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .exam-toggle button.active {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
         }
 
         .section {
@@ -42,51 +63,51 @@
             margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        h2 { font-size: 18px; color: var(--hint-color); text-transform: uppercase; margin: 0 0 16px 0; }
+        h2 { font-size: 16px; color: var(--hint-color); text-transform: uppercase; margin: 0 0 16px 0; letter-spacing: 0.5px; }
 
         .top-metrics { display: flex; justify-content: space-between; align-items: center; }
         .metric-card { flex: 1; text-align: center; }
-        .metric-card:first-child { border-right: 1px solid rgba(142, 142, 147, 0.3); }
-        .metric-value { font-size: 32px; font-weight: 700; margin: 8px 0; }
+        .metric-card:first-child { border-right: 1px solid rgba(142, 142, 147, 0.2); }
+        .metric-value { font-size: 32px; font-weight: 800; margin: 8px 0; transition: color 0.3s ease;}
         
-        .balance-value { color: var(--button-color); }
+        .balance-value { color: var(--primary-color); }
         .streak-value { color: var(--accent-fire); }
-
-        .fire-icon { font-size: 48px; text-align: center; margin: 5px 0; transition: all 0.3s ease; }
-        .fire-active { animation: pulse 1.5s infinite alternate; filter: drop-shadow(0 0 15px var(--accent-fire)); }
-        .fire-dead { filter: grayscale(100%) opacity(0.3); }
-        @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
 
         .action-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .btn {
-            flex: 1; background-color: var(--button-color); color: var(--button-text-color);
-            border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+            flex: 1; background-color: var(--primary-color); color: #fff;
+            border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;
+            transition: background-color 0.3s ease;
         }
-        .btn-full { flex-basis: 100%; margin-bottom: 10px; }
-        .btn-secondary { background-color: transparent; border: 1px solid var(--button-color); color: var(--button-color); }
+        .btn-full { flex-basis: 100%; margin-bottom: 6px; }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); }
 
-        .chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 20px; }
+        .chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 10px; }
 
         .history-item { padding: 12px 0; border-bottom: 1px solid rgba(142, 142, 147, 0.2); display: flex; justify-content: space-between; }
         .history-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .history-date { font-size: 14px; color: var(--hint-color); }
-        .history-score { font-weight: bold; font-size: 16px; }
+        .history-date { font-size: 15px; color: var(--text-color); font-weight: 500;}
+        .history-score { font-weight: 700; font-size: 16px; color: var(--primary-color); }
     </style>
 </head>
 <body>
+
+    <div class="exam-toggle">
+        <button id="btn-ege" class="active" onclick="switchExam('ege')">ЕГЭ (11 класс)</button>
+        <button id="btn-oge" onclick="switchExam('oge')">ОГЭ (9 класс)</button>
+    </div>
 
     <div class="section" id="dashboard">
         <div class="top-metrics">
             <div class="metric-card">
                 <h2>Баланс</h2>
                 <div class="metric-value balance-value" id="ui-balance">...</div>
-                <div style="font-size: 12px; color: var(--hint-color);">акад. рублей</div>
+                <div style="font-size: 12px; color: var(--hint-color);">токенов</div>
             </div>
             <div class="metric-card">
-                <h2>Серия</h2>
-                <div class="fire-icon" id="ui-fire">🔥</div>
-                <div class="metric-value streak-value" id="ui-streak">...</div>
-                <div style="font-size: 12px; color: var(--hint-color);">дней подряд</div>
+                <h2>Огонек</h2>
+                <div class="metric-value streak-value" id="ui-streak">🔥</div>
+                <div style="font-size: 12px; color: var(--hint-color);">в разработке</div>
             </div>
         </div>
         
@@ -103,13 +124,13 @@
     </div>
 
     <div class="section">
-        <h2>Компетенции</h2>
+        <h2>Матрица навыков</h2>
         <div class="chart-container"><canvas id="radarChart"></canvas></div>
     </div>
 
     <div class="section">
         <h2>Последние работы</h2>
-        <div id="history-feed"><div style="text-align: center; color: var(--hint-color); font-size: 14px;">Загрузка истории...</div></div>
+        <div id="history-feed"><div style="text-align: center; color: var(--hint-color); font-size: 14px;">Загрузка...</div></div>
     </div>
 
     <script>
@@ -118,79 +139,88 @@
         tg.ready();
 
         const user = tg.initDataUnsafe?.user;
-        const chatId = user ? user.id : '5689158489';
-
-        const N8N_API_URL = 'https://45.131.183.101.sslip.io/webhook/get-user-data';
+        const chatId = user ? user.id : '5689158489'; // Твой ID для дебага
+        
+        // ВАЖНО: Замени IP на свой URL вебхука!
+        const N8N_API_URL = 'https://45.131.183.101.sslip.io/webhook/get-user-data'; 
 
         let trendChartInstance = null;
-        let radarChartInstance = null; // Оставили имя переменной для совместимости, но отрисуем столбцы
+        let radarChartInstance = null;
+        
+        // Читаем URL, если зашли из бота ОГЭ, сразу включаем ОГЭ
+        let currentExam = new URLSearchParams(window.location.search).get('source') === 'oge' ? 'oge' : 'ege';
+        
+        // Применяем начальный стиль
+        applyTheme(currentExam);
+
+        function applyTheme(exam) {
+            const root = document.documentElement;
+            if (exam === 'oge') {
+                root.style.setProperty('--primary-color', '#BF5AF2'); // Фиолетовый ОГЭ
+                root.style.setProperty('--primary-transparent', 'rgba(191, 90, 242, 0.15)');
+                document.getElementById('btn-oge').classList.add('active');
+                document.getElementById('btn-ege').classList.remove('active');
+            } else {
+                root.style.setProperty('--primary-color', '#0A84FF'); // Синий ЕГЭ
+                root.style.setProperty('--primary-transparent', 'rgba(10, 132, 255, 0.15)');
+                document.getElementById('btn-ege').classList.add('active');
+                document.getElementById('btn-oge').classList.remove('active');
+            }
+        }
+
+        function switchExam(exam) {
+            if (currentExam === exam) return;
+            currentExam = exam;
+            applyTheme(exam);
+            fetchDashboardData(); // Перезапрашиваем данные при переключении
+        }
 
         function showFAQ() {
-            const faqText = 'ЧАСТЫЕ ВОПРОСЫ:\n\n1. Аудит стоит 50 акад. рублей.\n2. ИИ проверяет по жестким критериям ФИПИ.\n3. Серия (огонек) сгорает при простое 24 часа.\n4. ВАЖНО: Если сочинение на нескольких листах, загружайте их строго по порядку (одним альбомом).';
-            tg.showAlert(faqText);
+            const maxScore = currentExam === 'ege' ? 22 : 18;
+            tg.showAlert(`ЧАСТЫЕ ВОПРОСЫ:\n\n1. Аудит стоит 50 токенов.\n2. Максимальный балл: ${maxScore}.\n3. Если сочинение на нескольких листах, грузи их строго по порядку одним альбомом.`);
         }
 
         function requestPayment() {
-            tg.showAlert('Для пополнения баланса закройте Личный кабинет и отправьте боту сообщение "Оплатить".', function() {
-                tg.close();
-            });
+            tg.showAlert('Для пополнения баланса закрой Личный кабинет и отправь боту сообщение "Оплатить".', function() { tg.close(); });
         }
 
         async function fetchDashboardData() {
             try {
-                const response = await fetch(`${N8N_API_URL}?chat_id=${chatId}&t=${Date.now()}`);
+                // Добавляем параметр exam в запрос
+                const response = await fetch(`${N8N_API_URL}?chat_id=${chatId}&exam=${currentExam}&t=${Date.now()}`);
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 
-                const apiData = await response.json();
-                
-                const data = {
-                    balance: apiData.balance ?? 0,
-                    streak_count: apiData.streak_count ?? 0,
-                    trend_scores: apiData.trend_scores || [], 
-                    radar_scores: apiData.radar_scores || [0, 0, 0, 0, 0, 0], 
-                    history: apiData.history || []
-                };
-
+                const data = await response.json();
                 updateUI(data);
 
             } catch (error) {
-                console.error('Ошибка API:', error);
                 document.getElementById('ui-balance').innerText = 'Err';
-                document.getElementById('ui-streak').innerText = 'Err';
-                document.getElementById('history-feed').innerHTML = `<div style="text-align: center; color: #ff3b30; font-size: 14px;">Ошибка загрузки. Проверьте соединение с сервером.</div>`;
+                document.getElementById('history-feed').innerHTML = `<div style="text-align: center; color: #ff3b30;">Ошибка сервера.</div>`;
             }
         }
 
         function updateUI(data) {
-            document.getElementById('ui-balance').innerText = Math.floor(data.balance);
-            document.getElementById('ui-streak').innerText = data.streak_count;
-
-            const fireEl = document.getElementById('ui-fire');
-            if (data.streak_count > 0) {
-                fireEl.classList.add('fire-active');
-                fireEl.classList.remove('fire-dead');
-            } else {
-                fireEl.classList.add('fire-dead');
-                fireEl.classList.remove('fire-active');
-            }
+            document.getElementById('ui-balance').innerText = Math.floor(data.balance || 0);
 
             const historyContainer = document.getElementById('history-feed');
             historyContainer.innerHTML = '';
             
-            if (data.history.length === 0) {
+            const maxScore = currentExam === 'ege' ? 22 : 18;
+
+            if (!data.history || data.history.length === 0) {
                 historyContainer.innerHTML = '<div style="text-align: center; color: var(--hint-color); font-size: 14px;">Работы еще не загружены</div>';
             } else {
                 data.history.forEach(item => {
                     historyContainer.innerHTML += `
                         <div class="history-item">
                             <span class="history-date">${item.date}</span>
-                            <span class="history-score">${item.score}/22</span>
+                            <span class="history-score">${item.score} / ${maxScore}</span>
                         </div>
                     `;
                 });
             }
 
-            renderCharts(data.trend_scores, data.radar_scores);
+            renderCharts(data.trend_scores || [], data.radar_scores || [0,0,0,0,0,0]);
         }
 
         function renderCharts(trendData, radarData) {
@@ -198,71 +228,44 @@
             if (radarChartInstance) radarChartInstance.destroy();
 
             Chart.defaults.color = 'var(--hint-color)';
-            Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+            const rootStyle = getComputedStyle(document.documentElement);
+            const primary = rootStyle.getPropertyValue('--primary-color').trim();
+            const primaryTransparent = rootStyle.getPropertyValue('--primary-transparent').trim();
+            
+            const maxScore = currentExam === 'ege' ? 22 : 18;
 
-            const computedStyle = getComputedStyle(document.documentElement);
-            const fireColor = computedStyle.getPropertyValue('--accent-fire').trim();
-            const fillPattern = computedStyle.getPropertyValue('--radar-fill').trim();
-
-            // График 1: Динамика баллов (Линейный)
+            // Динамика баллов
             trendChartInstance = new Chart(document.getElementById('trendChart'), {
                 type: 'line',
                 data: {
                     labels: trendData.map((_, i) => `#${i+1}`),
                     datasets: [{ 
-                        label: 'Баллы', 
-                        data: trendData, 
-                        borderColor: '#007aff', 
-                        backgroundColor: 'rgba(0, 122, 255, 0.1)', 
-                        borderWidth: 3, 
-                        tension: 0.4, 
-                        fill: true, 
-                        pointBackgroundColor: '#007aff' 
+                        label: 'Баллы', data: trendData, borderColor: primary, 
+                        backgroundColor: primaryTransparent, borderWidth: 3, 
+                        tension: 0.4, fill: true, pointBackgroundColor: primary 
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 22, ticks: { stepSize: 5 } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: maxScore, ticks: { stepSize: 5 } } } }
             });
 
-            // График 2: Компетенции (Гистограмма / Столбцы)
+            // Компетенции
             radarChartInstance = new Chart(document.getElementById('radarChart'), {
                 type: 'bar',
                 data: {
                     labels: ['Орфограф.', 'Пунктуац.', 'Граммат.', 'Речь', 'Логика', 'Факты'],
                     datasets: [{ 
-                        label: 'Компетенции (%)', 
-                        data: radarData, 
-                        backgroundColor: fireColor, 
-                        borderRadius: 6, // Скругление углов столбцов
-                        borderWidth: 0 
+                        label: '%', data: radarData, backgroundColor: primary, 
+                        borderRadius: 6, borderWidth: 0 
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false } 
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            grid: { color: 'rgba(142, 142, 147, 0.2)' },
-                            ticks: { stepSize: 20 }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { 
-                                font: { size: 10, weight: '600' }, 
-                                color: 'var(--text-color)',
-                                maxRotation: 45, // Наклон текста, если не влезает на узких экранах
-                                minRotation: 0
-                            }
-                        }
-                    }
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100 }, x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' } } } }
                 }
             });
         }
 
+        // Запуск
         fetchDashboardData();
     </script>
 </body>
