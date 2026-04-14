@@ -92,11 +92,11 @@
         tg.expand(); 
         tg.ready();
 
-        // Боевые эндпоинты n8n
+        // Боевые эндпоинты n8n (Оба теперь используют GET)
         const GET_DASHBOARD_URL = 'https://45.131.183.101.sslip.io/webhook/teacher/dashboard';
-        const POST_CODE_URL = 'https://45.131.183.101.sslip.io/webhook/teacher/generate_code';
+        const GENERATE_CODE_URL = 'https://45.131.183.101.sslip.io/webhook/teacher/generate_code';
         
-        // Получение ID (с фолбеком для локальных тестов в браузере)
+        // Получение ID
         const chatId = tg.initDataUnsafe?.user?.id || 123456789;
 
         // Главная функция загрузки данных
@@ -116,7 +116,7 @@
                 renderUI(data);
             } catch (e) {
                 document.getElementById('loader').style.display = 'none';
-                tg.showAlert("Ошибка связи с сервером. Проверьте подключение.");
+                tg.showAlert(`Ошибка связи: ${e.message}`);
             }
         }
 
@@ -164,7 +164,7 @@
             }
         }
 
-        // Генерация инвайт-кода
+        // Генерация инвайт-кода (Переписано на GET)
         async function generateInvite() {
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             
@@ -172,11 +172,8 @@
                 if (!confirmed) return;
                 
                 try {
-                    const res = await fetch(POST_CODE_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: chatId })
-                    });
+                    // Отправляем GET-запрос вместо POST для обхода CORS preflight
+                    const res = await fetch(`${GENERATE_CODE_URL}?chat_id=${chatId}`);
                     const data = await res.json();
                     
                     if(data.invite_code) {
@@ -185,7 +182,7 @@
                         tg.showAlert("Не удалось сгенерировать код. Убедитесь, что вы зарегистрированы как Учитель.");
                     }
                 } catch (e) {
-                    tg.showAlert("Ошибка генерации кода. Сервер недоступен.");
+                    tg.showAlert(`Ошибка генерации: ${e.message}`);
                 }
             });
         }
