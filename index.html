@@ -3,270 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Metascore Dashboard</title>
-    
+    <title>ПРОВЕРЯЙ: Дашборд Учителя</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
-        :root {
-            /* Базовые цвета Telegram */
-            --bg-color: var(--tg-theme-bg-color, #1c1c1e);
-            --text-color: var(--tg-theme-text-color, #ffffff);
-            --hint-color: var(--tg-theme-hint-color, #8e8e93);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
-            
-            /* Динамические цвета (меняются JS-ом) */
-            --primary-color: #0A84FF; /* По умолчанию синий ЕГЭ */
-            --primary-transparent: rgba(10, 132, 255, 0.15);
-            --accent-fire: #FF9500;
+        body { 
+            background-color: var(--tg-theme-bg-color, #f3f4f6); 
+            color: var(--tg-theme-text-color, #111827); 
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0; padding: 16px; box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-            transition: background-color 0.3s ease;
+        .card { 
+            background-color: var(--tg-theme-secondary-bg-color, #ffffff); 
+            border: 1px solid var(--tg-theme-hint-color, #e5e7eb); 
         }
-
-        /* Переключатель Экзаменов */
-        .exam-toggle {
-            display: flex;
-            background-color: rgba(142, 142, 147, 0.12);
-            border-radius: 9px;
-            padding: 3px;
-            margin-bottom: 20px;
+        .btn-primary { 
+            background-color: var(--tg-theme-button-color, #3b82f6); 
+            color: var(--tg-theme-button-text-color, #ffffff); 
         }
-        .exam-toggle button {
-            flex: 1;
-            padding: 8px 0;
-            border: none;
-            background: transparent;
-            color: var(--hint-color);
-            border-radius: 7px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .exam-toggle button.active {
-            background-color: var(--secondary-bg);
-            color: var(--text-color);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        }
-
-        .section {
-            background-color: var(--secondary-bg);
-            border-radius: 16px; padding: 20px;
-            margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        h2 { font-size: 16px; color: var(--hint-color); text-transform: uppercase; margin: 0 0 16px 0; letter-spacing: 0.5px; }
-
-        .top-metrics { display: flex; justify-content: space-between; align-items: center; }
-        .metric-card { flex: 1; text-align: center; }
-        .metric-card:first-child { border-right: 1px solid rgba(142, 142, 147, 0.2); }
-        .metric-value { font-size: 32px; font-weight: 800; margin: 8px 0; transition: color 0.3s ease;}
-        
-        .balance-value { color: var(--primary-color); }
-        .streak-value { color: var(--accent-fire); }
-
-        .action-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-        .btn {
-            flex: 1; background-color: var(--primary-color); color: #fff;
-            border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .btn-full { flex-basis: 100%; margin-bottom: 6px; }
-        .btn-secondary { background-color: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); }
-
-        .chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 10px; }
-
-        .history-item { padding: 12px 0; border-bottom: 1px solid rgba(142, 142, 147, 0.2); display: flex; justify-content: space-between; }
-        .history-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .history-date { font-size: 15px; color: var(--text-color); font-weight: 500;}
-        .history-score { font-weight: 700; font-size: 16px; color: var(--primary-color); }
     </style>
 </head>
-<body>
-
-    <div class="exam-toggle">
-        <button id="btn-ege" class="active" onclick="switchExam('ege')">ЕГЭ (11 класс)</button>
-        <button id="btn-oge" onclick="switchExam('oge')">ОГЭ (9 класс)</button>
+<body class="p-4 antialiased">
+    
+    <div id="loader" class="flex justify-center items-center h-screen">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
     </div>
 
-    <div class="section" id="dashboard">
-        <div class="top-metrics">
-            <div class="metric-card">
-                <h2>Баланс</h2>
-                <div class="metric-value balance-value" id="ui-balance">...</div>
-                <div style="font-size: 12px; color: var(--hint-color);">токенов</div>
-            </div>
-            <div class="metric-card">
-                <h2>Огонек</h2>
-                <div class="metric-value streak-value" id="ui-streak">🔥</div>
-                <div style="font-size: 12px; color: var(--hint-color);">в разработке</div>
-            </div>
-        </div>
+    <div id="app" class="max-w-md mx-auto space-y-6 hidden pb-10">
         
-        <div class="action-buttons">
-            <button class="btn btn-full" onclick="requestPayment()">Пополнить баланс</button>
-            <button class="btn btn-secondary" onclick="tg.openTelegramLink('https://t.me/DisciplineLover')">Поддержка</button>
-            <button class="btn btn-secondary" onclick="showFAQ()">FAQ</button>
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-bold tracking-tight">Мой класс</h1>
+            <div class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 border border-green-200 font-medium">
+                SaaS Активен
+            </div>
         </div>
-    </div>
 
-    <div class="section">
-        <h2>Динамика баллов</h2>
-        <div class="chart-container"><canvas id="trendChart"></canvas></div>
-    </div>
+        <div class="grid grid-cols-3 gap-3">
+            <div class="card rounded-xl p-3 text-center shadow-sm">
+                <p class="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Учеников</p>
+                <p class="text-xl font-semibold" id="val-students">-</p>
+            </div>
+            <div class="card rounded-xl p-3 text-center shadow-sm">
+                <p class="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Сдано работ</p>
+                <p class="text-xl font-semibold" id="val-works">-</p>
+            </div>
+            <div class="card rounded-xl p-3 text-center shadow-sm">
+                <p class="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Ср. Балл</p>
+                <p class="text-xl font-semibold text-blue-600" id="val-avg">-</p>
+            </div>
+        </div>
 
-    <div class="section">
-        <h2>Матрица навыков</h2>
-        <div class="chart-container"><canvas id="radarChart"></canvas></div>
-    </div>
+        <div class="card rounded-xl p-4 shadow-sm">
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-red-500 mb-3 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Красная зона класса
+            </h2>
+            <div id="error-list" class="space-y-2 text-sm">
+                </div>
+        </div>
 
-    <div class="section">
-        <h2>Последние работы</h2>
-        <div id="history-feed"><div style="text-align: center; color: var(--hint-color); font-size: 14px;">Загрузка...</div></div>
+        <div class="card rounded-xl shadow-sm overflow-hidden">
+            <div class="p-3 border-b border-gray-100 bg-opacity-50" style="background-color: var(--tg-theme-bg-color)">
+                <h2 class="text-sm font-semibold">Аналитика по ученикам</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-xs text-gray-500 border-b" style="border-color: var(--tg-theme-hint-color)">
+                            <th class="p-3 font-medium">Имя</th>
+                            <th class="p-3 font-medium text-center">Работ</th>
+                            <th class="p-3 font-medium text-right">Ср. Балл</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table" class="divide-y" style="border-color: var(--tg-theme-hint-color)">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button onclick="generateInvite()" class="btn-primary w-full py-3.5 rounded-xl font-semibold shadow-md transition active:scale-95 flex justify-center items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            Получить код для учеников
+        </button>
     </div>
 
     <script>
+        // Инициализация Telegram Web App
         const tg = window.Telegram.WebApp;
         tg.expand(); 
         tg.ready();
 
-        const user = tg.initDataUnsafe?.user;
-        const chatId = user ? user.id : '5689158489'; // Твой ID для дебага
+        // Боевые эндпоинты n8n
+        const GET_DASHBOARD_URL = 'https://45.131.183.101.sslip.io/webhook/teacher/dashboard';
+        const POST_CODE_URL = 'https://45.131.183.101.sslip.io/webhook/teacher/generate_code';
         
-        // ВАЖНО: Замени IP на свой URL вебхука!
-        const N8N_API_URL = 'https://45.131.183.101.sslip.io/webhook/get-user-data'; 
+        // Получение ID (с фолбеком для локальных тестов в браузере)
+        const chatId = tg.initDataUnsafe?.user?.id || 123456789;
 
-        let trendChartInstance = null;
-        let radarChartInstance = null;
-        
-        // Читаем URL, если зашли из бота ОГЭ, сразу включаем ОГЭ
-        let currentExam = new URLSearchParams(window.location.search).get('source') === 'oge' ? 'oge' : 'ege';
-        
-        // Применяем начальный стиль
-        applyTheme(currentExam);
-
-        function applyTheme(exam) {
-            const root = document.documentElement;
-            if (exam === 'oge') {
-                root.style.setProperty('--primary-color', '#BF5AF2'); // Фиолетовый ОГЭ
-                root.style.setProperty('--primary-transparent', 'rgba(191, 90, 242, 0.15)');
-                document.getElementById('btn-oge').classList.add('active');
-                document.getElementById('btn-ege').classList.remove('active');
-            } else {
-                root.style.setProperty('--primary-color', '#0A84FF'); // Синий ЕГЭ
-                root.style.setProperty('--primary-transparent', 'rgba(10, 132, 255, 0.15)');
-                document.getElementById('btn-ege').classList.add('active');
-                document.getElementById('btn-oge').classList.remove('active');
-            }
-        }
-
-        function switchExam(exam) {
-            if (currentExam === exam) return;
-            currentExam = exam;
-            applyTheme(exam);
-            fetchDashboardData(); // Перезапрашиваем данные при переключении
-        }
-
-        function showFAQ() {
-            const maxScore = currentExam === 'ege' ? 22 : 18;
-            tg.showAlert(`ЧАСТЫЕ ВОПРОСЫ:\n\n1. Аудит стоит 50 токенов.\n2. Максимальный балл: ${maxScore}.\n3. Если сочинение на нескольких листах, грузи их строго по порядку одним альбомом.`);
-        }
-
-        function requestPayment() {
-            tg.showAlert('Для пополнения баланса закрой Личный кабинет и отправь боту сообщение "Оплатить".', function() { tg.close(); });
-        }
-
-        async function fetchDashboardData() {
+        // Главная функция загрузки данных
+        async function loadDashboard() {
             try {
-                // Добавляем параметр exam в запрос
-                const response = await fetch(`${N8N_API_URL}?chat_id=${chatId}&exam=${currentExam}&t=${Date.now()}`);
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                const res = await fetch(`${GET_DASHBOARD_URL}?chat_id=${chatId}`);
                 
-                const data = await response.json();
-                updateUI(data);
-
-            } catch (error) {
-                document.getElementById('ui-balance').innerText = 'Err';
-                document.getElementById('history-feed').innerHTML = `<div style="text-align: center; color: #ff3b30;">Ошибка сервера.</div>`;
+                // Обработка просроченной подписки
+                if (res.status === 403) {
+                    document.getElementById('loader').style.display = 'none';
+                    tg.showAlert("Ваша SaaS-подписка истекла. Продлите доступ через главное меню бота.");
+                    setTimeout(() => tg.close(), 2000);
+                    return;
+                }
+                
+                const data = await res.json();
+                renderUI(data);
+            } catch (e) {
+                document.getElementById('loader').style.display = 'none';
+                tg.showAlert("Ошибка связи с сервером. Проверьте подключение.");
             }
         }
 
-        function updateUI(data) {
-            document.getElementById('ui-balance').innerText = Math.floor(data.balance || 0);
+        // Отрисовка интерфейса
+        function renderUI(data) {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
 
-            const historyContainer = document.getElementById('history-feed');
-            historyContainer.innerHTML = '';
-            
-            const maxScore = currentExam === 'ege' ? 22 : 18;
+            // 1. Сводка
+            document.getElementById('val-students').innerText = data.summary?.students_count || 0;
+            document.getElementById('val-works').innerText = data.summary?.total_works || 0;
+            document.getElementById('val-avg').innerText = data.summary?.class_avg || 0;
 
-            if (!data.history || data.history.length === 0) {
-                historyContainer.innerHTML = '<div style="text-align: center; color: var(--hint-color); font-size: 14px;">Работы еще не загружены</div>';
-            } else {
-                data.history.forEach(item => {
-                    historyContainer.innerHTML += `
-                        <div class="history-item">
-                            <span class="history-date">${item.date}</span>
-                            <span class="history-score">${item.score} / ${maxScore}</span>
-                        </div>
-                    `;
+            // 2. Красная зона (Ошибки)
+            const errorList = document.getElementById('error-list');
+            if (data.summary?.top_errors && data.summary.top_errors.length > 0) {
+                errorList.innerHTML = '';
+                data.summary.top_errors.forEach(err => {
+                    errorList.innerHTML += `
+                        <div class="flex justify-between items-center bg-red-50 text-red-800 p-2.5 rounded-lg border border-red-100">
+                            <span class="font-medium">${err.criteria}</span>
+                            <span class="text-xs font-bold px-2 py-1 bg-red-200 text-red-900 rounded-full">${err.count} провалов</span>
+                        </div>`;
                 });
+            } else {
+                errorList.innerHTML = '<p class="text-gray-500 italic text-center py-2">Работ пока нет или ошибки отсутствуют 🎉</p>';
             }
 
-            renderCharts(data.trend_scores || [], data.radar_scores || [0,0,0,0,0,0]);
+            // 3. Таблица учеников
+            const tbody = document.getElementById('student-table');
+            if (data.students && data.students.length > 0) {
+                tbody.innerHTML = '';
+                data.students.forEach(s => {
+                    // Зеленый цвет для высоких баллов (>= 18), серый для остальных
+                    const scoreColor = (s.avg_score >= 18) ? 'text-green-600' : 'text-gray-800';
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="p-3 font-medium">${s.username || 'Ученик'}</td>
+                            <td class="p-3 text-center text-gray-600">${s.works}</td>
+                            <td class="p-3 text-right font-bold ${scoreColor}">${s.avg_score || '-'}</td>
+                        </tr>`;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-500">Учеников пока нет. Отправьте им код-приглашение.</td></tr>';
+            }
         }
 
-        function renderCharts(trendData, radarData) {
-            if (trendChartInstance) trendChartInstance.destroy();
-            if (radarChartInstance) radarChartInstance.destroy();
-
-            Chart.defaults.color = 'var(--hint-color)';
-            const rootStyle = getComputedStyle(document.documentElement);
-            const primary = rootStyle.getPropertyValue('--primary-color').trim();
-            const primaryTransparent = rootStyle.getPropertyValue('--primary-transparent').trim();
+        // Генерация инвайт-кода
+        async function generateInvite() {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             
-            const maxScore = currentExam === 'ege' ? 22 : 18;
-
-            // Динамика баллов
-            trendChartInstance = new Chart(document.getElementById('trendChart'), {
-                type: 'line',
-                data: {
-                    labels: trendData.map((_, i) => `#${i+1}`),
-                    datasets: [{ 
-                        label: 'Баллы', data: trendData, borderColor: primary, 
-                        backgroundColor: primaryTransparent, borderWidth: 3, 
-                        tension: 0.4, fill: true, pointBackgroundColor: primary 
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: maxScore, ticks: { stepSize: 5 } } } }
-            });
-
-            // Компетенции
-            radarChartInstance = new Chart(document.getElementById('radarChart'), {
-                type: 'bar',
-                data: {
-                    labels: ['Орфограф.', 'Пунктуац.', 'Граммат.', 'Речь', 'Логика', 'Факты'],
-                    datasets: [{ 
-                        label: '%', data: radarData, backgroundColor: primary, 
-                        borderRadius: 6, borderWidth: 0 
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, max: 100 }, x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' } } } }
+            tg.showConfirm("Сгенерировать новый код? Старый код перестанет работать для новых учеников.", async (confirmed) => {
+                if (!confirmed) return;
+                
+                try {
+                    const res = await fetch(POST_CODE_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: chatId })
+                    });
+                    const data = await res.json();
+                    
+                    if(data.invite_code) {
+                        tg.showAlert(`Ваш код:\n\n${data.invite_code}\n\nУченик должен отправить его боту, чтобы привязаться к вашему классу.`);
+                    } else {
+                        tg.showAlert("Не удалось сгенерировать код. Убедитесь, что вы зарегистрированы как Учитель.");
+                    }
+                } catch (e) {
+                    tg.showAlert("Ошибка генерации кода. Сервер недоступен.");
                 }
             });
         }
 
         // Запуск
-        fetchDashboardData();
+        loadDashboard();
     </script>
 </body>
 </html>
