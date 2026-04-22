@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ПРОВЕРЯЙ | Дашборд</title>
+    <title>ПРОВЕРЯЙ | Дашборд Учителя</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f4f7f6; color: #333; padding: 20px; }
@@ -11,9 +12,8 @@
         
         header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .logo { font-size: 20px; font-weight: 800; color: #2c3e50; }
-        .code-btn { background: #e8f4fd; color: #3498db; border: 1px solid #3498db; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .code-btn { background: #e8f4fd; color: #3498db; border: 1px solid #3498db; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
         
-        /* Аккордеон */
         .student-card { background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
         .card-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; transition: background 0.2s; }
         .card-header:hover { background: #f8f9fa; }
@@ -23,17 +23,16 @@
         .card-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; background: #fafbfc; }
         .student-card.active .card-body { padding: 20px; max-height: 2000px; border-top: 1px solid #eee; }
         
-        /* Критерии */
         .criteria-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 10px; margin-bottom: 20px; }
         .crit-badge { background: #fff; border: 1px solid #ddd; padding: 8px; text-align: center; border-radius: 6px; font-size: 14px; }
         .crit-name { color: #7f8c8d; font-size: 11px; display: block; margin-bottom: 3px; }
         .crit-score { font-weight: bold; color: #2c3e50; }
         
-        /* Текст и фидбек */
         .ai-comment { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 14px; color: #856404; }
         .essay-text { white-space: pre-wrap; font-family: "Georgia", serif; line-height: 1.6; color: #444; background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 6px; }
         
-        .loader { text-align: center; padding: 40px; color: #7f8c8d; display: none; }
+        .loader { text-align: center; padding: 40px; color: #7f8c8d; font-weight: 600;}
+        .empty-state { text-align: center; padding: 40px; color: #7f8c8d; background: #fff; border-radius: 8px; margin-top: 20px;}
     </style>
 </head>
 <body>
@@ -41,45 +40,59 @@
 <div class="container">
     <header>
         <div class="logo">ПРОВЕРЯЙ</div>
-        <button class="code-btn" onclick="alert('Код 777-XYZ скопирован')">Код учителя: 777-XYZ</button>
+        <button class="code-btn" id="copy-btn" onclick="copyCode()">Код: Загрузка...</button>
     </header>
 
-    <div id="loader" class="loader">Загрузка работ...</div>
+    <div id="loader" class="loader">Синхронизация с базой...</div>
     <div id="students-list"></div>
 </div>
 
 <script>
-    // ВСТАВЬ СЮДА СВОЙ URL WEBHOOK ИЗ N8N (Метод GET)
-    const WEBHOOK_URL = 'https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=777-XYZ';
+    // 1. Инициализация Telegram Web App
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // Разворачиваем приложение на весь экран
 
-    // Для тестов (если вебхук еще не готов), используем мок-данные
-    const mockData = [
-        {
-            studentName: "Иванов Иван",
-            totalScore: 18,
-            criteria: { K1: 1, K2: 3, K3: 1, K4: 1, K5: 1, K8: 2, K10: 1 },
-            aiComment: "К5: Нарушена логика во втором абзаце. К8: Пропущена запятая в сложном предложении.",
-            rawText: "В предложенном тексте автор поднимает проблему... \n\nЯ считаю, что автор прав. Во-первых лес красивый. Во-вторых я гулял с собакой."
-        }
-    ];
+    // 2. Получаем реальный ID учителя прямо из Телеграма
+    const teacherId = tg.initDataUnsafe?.user?.id || 'TEST_MODE'; 
+    
+    // Обновляем кнопку интерфейса
+    const copyBtn = document.getElementById('copy-btn');
+    copyBtn.innerText = `Код: ${teacherId}`;
+
+    function copyCode() {
+        navigator.clipboard.writeText(teacherId);
+        tg.showAlert(`Код ${teacherId} скопирован. Отправьте его ученикам!`);
+    }
+
+    // 3. Формируем динамический URL к твоему n8n
+    const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
 
     async function loadData() {
         const list = document.getElementById('students-list');
         const loader = document.getElementById('loader');
         
-        // loader.style.display = 'block'; // Раскомментируй при реальном API
-        
         try {
-            // КОГДА НАСТРОИШЬ n8n, РАСКОММЕНТИРУЙ ЭТО:
-            // const response = await fetch(WEBHOOK_URL);
-            // const data = await response.json();
+            // Реальный запрос к твоему n8n серверу
+            const response = await fetch(WEBHOOK_URL);
             
-            const data = mockData; // Пока используем мок-данные
+            if (!response.ok) throw new Error('Ошибка сети');
             
-            // loader.style.display = 'none'; // Раскомментируй при реальном API
+            const data = await response.json();
+            loader.style.display = 'none';
+            
+            // Если база пустая (нет работ)
+            if (!data || data.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Пока здесь пусто</h3>
+                        <p style="margin-top:10px;">Отправьте ученикам свой код <b>${teacherId}</b>. <br>Как только они сдадут сочинения, результаты появятся здесь.</p>
+                    </div>`;
+                return;
+            }
+            
             renderStudents(data);
         } catch (error) {
-            loader.innerText = "Ошибка загрузки данных.";
+            loader.innerText = "Ошибка загрузки. Проверьте сервер n8n.";
             console.error(error);
         }
     }
@@ -88,11 +101,10 @@
         const list = document.getElementById('students-list');
         list.innerHTML = '';
 
-        data.forEach((student, index) => {
+        data.forEach(student => {
             const card = document.createElement('div');
             card.className = 'student-card';
             
-            // Генерация бейджей критериев
             let criteriaHtml = '';
             for (const [key, val] of Object.entries(student.criteria)) {
                 criteriaHtml += `<div class="crit-badge"><span class="crit-name">${key}</span><span class="crit-score">${val}</span></div>`;
@@ -105,7 +117,7 @@
                 </div>
                 <div class="card-body">
                     <div class="criteria-grid">${criteriaHtml}</div>
-                    <div class="ai-comment"><strong>🤖 Комментарий ИИ:</strong><br>${student.aiComment}</div>
+                    <div class="ai-comment"><strong>🤖 Главная ошибка:</strong><br>${student.aiComment}</div>
                     <div class="essay-text">${student.rawText}</div>
                 </div>
             `;
@@ -118,7 +130,7 @@
         card.classList.toggle('active');
     }
 
-    // Запуск
+    // Запускаем выгрузку при загрузке страницы
     window.onload = loadData;
 </script>
 
