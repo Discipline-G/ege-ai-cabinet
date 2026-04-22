@@ -14,6 +14,12 @@
         .logo { font-size: 20px; font-weight: 800; color: #2c3e50; }
         .code-btn { background: #e8f4fd; color: #3498db; border: 1px solid #3498db; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
         
+        /* Блок Аналитики */
+        .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-left: 4px solid #3498db; }
+        .stat-value { font-size: 28px; font-weight: 800; color: #2c3e50; margin-top: 5px; }
+        .stat-label { font-size: 13px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+
         .student-card { background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
         .card-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; transition: background 0.2s; }
         .card-header:hover { background: #f8f9fa; }
@@ -44,18 +50,26 @@
     </header>
 
     <div id="loader" class="loader">Синхронизация с базой...</div>
+    
+    <div id="analytics-panel" class="analytics-grid" style="display: none;">
+        <div class="stat-card">
+            <div class="stat-label">Проверено работ</div>
+            <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-card" style="border-left-color: #2ecc71;">
+            <div class="stat-label">Средний балл</div>
+            <div class="stat-value" id="stat-avg">0</div>
+        </div>
+    </div>
+
     <div id="students-list"></div>
 </div>
 
 <script>
-    // 1. Инициализация Telegram Web App
     const tg = window.Telegram.WebApp;
-    tg.expand(); // Разворачиваем приложение на весь экран
-
-    // 2. Получаем реальный ID учителя прямо из Телеграма
+    tg.expand();
     const teacherId = tg.initDataUnsafe?.user?.id || 'TEST_MODE'; 
     
-    // Обновляем кнопку интерфейса
     const copyBtn = document.getElementById('copy-btn');
     copyBtn.innerText = `Код: ${teacherId}`;
 
@@ -64,52 +78,47 @@
         tg.showAlert(`Код ${teacherId} скопирован. Отправьте его ученикам!`);
     }
 
-    // 3. Формируем динамический URL к твоему n8n
     const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
 
     async function loadData() {
         const list = document.getElementById('students-list');
         const loader = document.getElementById('loader');
+        const analyticsPanel = document.getElementById('analytics-panel');
         
         try {
-            // Реальный запрос к твоему n8n серверу
             const response = await fetch(WEBHOOK_URL);
-            
             if (!response.ok) throw new Error('Ошибка сети');
-            
             const data = await response.json();
             loader.style.display = 'none';
             
-            // Если база пустая (нет работ)
             if (!data || data.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <h3>Пока здесь пусто</h3>
-                        <p style="margin-top:10px;">Отправьте ученикам свой код <b>${teacherId}</b>. <br>Как только они сдадут сочинения, результаты появятся здесь.</p>
-                    </div>`;
+                list.innerHTML = `<div class="empty-state"><h3>Пока здесь пусто</h3><p style="margin-top:10px;">Отправьте ученикам свой код <b>${teacherId}</b>. <br>Как только они сдадут сочинения, результаты появятся здесь.</p></div>`;
                 return;
             }
             
+            // Рендер аналитики
+            const totalWorks = data.length;
+            const avgScore = data.reduce((acc, curr) => acc + curr.totalScore, 0) / totalWorks;
+            document.getElementById('stat-total').innerText = totalWorks;
+            document.getElementById('stat-avg').innerText = avgScore.toFixed(1);
+            analyticsPanel.style.display = 'grid';
+
             renderStudents(data);
         } catch (error) {
             loader.innerText = "Ошибка загрузки. Проверьте сервер n8n.";
-            console.error(error);
         }
     }
 
     function renderStudents(data) {
         const list = document.getElementById('students-list');
         list.innerHTML = '';
-
         data.forEach(student => {
             const card = document.createElement('div');
             card.className = 'student-card';
-            
             let criteriaHtml = '';
             for (const [key, val] of Object.entries(student.criteria)) {
                 criteriaHtml += `<div class="crit-badge"><span class="crit-name">${key}</span><span class="crit-score">${val}</span></div>`;
             }
-
             card.innerHTML = `
                 <div class="card-header" onclick="toggleCard(this)">
                     <div class="student-name">${student.studentName}</div>
@@ -126,11 +135,9 @@
     }
 
     function toggleCard(element) {
-        const card = element.parentElement;
-        card.classList.toggle('active');
+        element.parentElement.classList.toggle('active');
     }
 
-    // Запускаем выгрузку при загрузке страницы
     window.onload = loadData;
 </script>
 
