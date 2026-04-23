@@ -81,8 +81,10 @@
     copyBtn.innerText = `Код: ${teacherId}`;
 
     function copyCode() {
-        navigator.clipboard.writeText(teacherId);
-        tg.showAlert(`Код ${teacherId} скопирован. Отправьте его ученикам!`);
+        // ВАЖНО: Замени PROVERYAI_BOT на реальный юзернейм твоего бота!
+        const inviteLink = `https://t.me/PROVERYAI_BOT?start=teacher_${teacherId}`;
+        navigator.clipboard.writeText(inviteLink);
+        tg.showAlert(`Ссылка скопирована!\n\nОтправьте её ученикам. При переходе по ней они автоматически привяжутся к вашему классу.`);
     }
 
     const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
