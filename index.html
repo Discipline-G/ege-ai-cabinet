@@ -2,169 +2,246 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ПРОВЕРЯЙ | Дашборд Учителя</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ПРОВЕРЯЙ: Кабинет</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #f4f7f6; color: #333; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; padding-bottom: 40px; }
+        body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding-bottom: 30px; }
+        .card { background-color: #ffffff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 20px; margin-bottom: 15px; }
         
-        header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .logo { font-size: 20px; font-weight: 800; color: #2c3e50; }
-        .code-btn { background: #e8f4fd; color: #3498db; border: 1px solid #3498db; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 50; backdrop-filter: blur(2px); }
+        #tariffs-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; z-index: 100; padding: 25px 20px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); transform: translateY(100%); transition: transform 0.3s ease-out; max-height: 85vh; overflow-y: auto;}
+        #tariffs-modal.open { transform: translateY(0); display: block; }
         
-        .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-left: 4px solid #3498db; }
-        .stat-card.full { grid-column: span 2; border-left-color: #2ecc71; }
-        .stat-value { font-size: 28px; font-weight: 800; color: #2c3e50; margin-top: 5px; }
-        .stat-label { font-size: 13px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
-
-        .student-card { background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-        .card-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; transition: background 0.2s; }
-        .card-header:hover { background: #f8f9fa; }
-        .student-name { font-weight: 600; font-size: 16px; }
-        .student-score { background: #2c3e50; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 14px; font-weight: bold; }
-        
-        .card-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; background: #fafbfc; }
-        .student-card.active .card-body { padding: 20px; max-height: 2000px; border-top: 1px solid #eee; }
-        
-        .criteria-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .crit-badge { background: #fff; border: 1px solid #ddd; padding: 8px; text-align: center; border-radius: 6px; font-size: 14px; }
-        .crit-name { color: #7f8c8d; font-size: 11px; display: block; margin-bottom: 3px; }
-        .crit-score { font-weight: bold; color: #2c3e50; }
-        
-        .ai-comment { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 14px; color: #856404; }
-        .essay-text { white-space: pre-wrap; font-family: "Georgia", serif; line-height: 1.6; color: #444; background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 6px; }
-        
-        .loader { text-align: center; padding: 40px; color: #7f8c8d; font-weight: 600;}
-        .empty-state { text-align: center; padding: 40px; color: #7f8c8d; background: #fff; border-radius: 8px; margin-top: 20px;}
-        .update-indicator { text-align: center; font-size: 12px; color: #bdc3c7; margin-top: 10px; }
+        .tariff-card { border: 2px solid #e5e7eb; border-radius: 12px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
+        .tariff-card.active { border-color: #3b82f6; background-color: #eff6ff; }
     </style>
 </head>
-<body>
+<body class="p-4">
 
-<div class="container">
-    <header>
-        <div class="logo">ПРОВЕРЯЙ</div>
-        <button class="code-btn" id="copy-btn" onclick="copyCode()">Код: Загрузка...</button>
-    </header>
+    <div id="loader" class="flex justify-center items-center h-screen">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+    </div>
 
-    <div id="loader" class="loader">Синхронизация с базой...</div>
-    
-    <div id="analytics-panel" class="analytics-grid" style="display: none;">
-        <div class="stat-card">
-            <div class="stat-label">Проверено работ</div>
-            <div class="stat-value" id="stat-total">0</div>
+    <div id="app" class="max-w-md mx-auto hidden">
+        
+        <div class="flex justify-between gap-3 mb-4">
+            <div class="card flex-1 mb-0 flex flex-col justify-center items-center">
+                <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">Баланс</span>
+                <div class="text-3xl font-black text-blue-500 my-1" id="val-balance">-</div>
+                <span class="text-xs text-gray-400">проверок</span>
+            </div>
+            
+            <div class="card flex-1 mb-0 flex flex-col justify-center items-center">
+                <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">Ваша Лига</span>
+                <div class="text-xl font-bold my-2" id="val-league">-</div>
+                <span class="text-xs text-gray-400" id="val-works-count">0 работ</span>
+            </div>
         </div>
-        <div class="stat-card" style="border-left-color: #f39c12;">
-            <div class="stat-label">Учеников в классе</div>
-            <div class="stat-value" id="stat-students">0</div>
+
+        <div class="space-y-3 mb-4">
+            <button onclick="openTariffs()" class="w-full bg-blue-500 text-white font-bold py-3.5 rounded-xl active:bg-blue-600 transition shadow-md text-[15px]">
+                Пополнить баланс
+            </button>
+            <div class="flex gap-3">
+                <button onclick="tg.showAlert('Напишите /support боту для связи с поддержкой')" class="flex-1 bg-white border border-gray-200 text-blue-500 font-semibold py-2.5 rounded-xl active:bg-gray-50 transition text-sm">
+                    Поддержка
+                </button>
+                <button onclick="tg.showAlert('FAQ:\n1 токен = 1 проверка сочинения.\nСрок действия токенов: 30 дней.')" class="flex-1 bg-white border border-gray-200 text-blue-500 font-semibold py-2.5 rounded-xl active:bg-gray-50 transition text-sm">
+                    Правила
+                </button>
+            </div>
         </div>
-        <div class="stat-card full">
-            <div class="stat-label">Средний балл класса</div>
-            <div class="stat-value" id="stat-avg">0</div>
+
+        <div class="card">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Динамика баллов</h2>
+            <div class="h-48 w-full">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Компетенции</h2>
+            <div class="h-48 w-full">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Последние работы</h2>
+            <div id="history-list" class="divide-y divide-gray-100">
+                </div>
         </div>
     </div>
 
-    <div id="students-list"></div>
-    <div id="last-update" class="update-indicator"></div>
-</div>
-
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    const teacherId = tg.initDataUnsafe?.user?.id || 'TEST_MODE'; 
-    
-    const copyBtn = document.getElementById('copy-btn');
-    copyBtn.innerText = `Код: ${teacherId}`;
-
-    // ИСПРАВЛЕНА ССЫЛКА НА ТВОЕГО БОТА
-    function copyCode() {
-        const inviteLink = `https://t.me/ru_repetitor_bot?start=teacher_${teacherId}`;
-        navigator.clipboard.writeText(inviteLink);
-        tg.showAlert(`Ссылка скопирована!\n\nОтправьте её ученикам. Они автоматически привяжутся к вашему классу после перехода.`);
-    }
-
-    const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
-
-    async function loadData() {
-        const list = document.getElementById('students-list');
-        const loader = document.getElementById('loader');
-        const analyticsPanel = document.getElementById('analytics-panel');
-        const updateIndicator = document.getElementById('last-update');
+    <div id="modal-overlay" onclick="closeTariffs()"></div>
+    <div id="tariffs-modal">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Пакеты проверок</h2>
+            <button onclick="closeTariffs()" class="text-gray-400 p-2 text-2xl leading-none">&times;</button>
+        </div>
+        <p class="text-xs text-gray-500 mb-4">* Все неиспользованные проверки сгорают через 30 дней.</p>
         
-        try {
-            const response = await fetch(WEBHOOK_URL);
-            if (!response.ok) throw new Error('Ошибка сети');
-            const data = await response.json();
-            loader.style.display = 'none';
-            
-            const works = data.works || [];
-            const studentsCount = data.studentsCount || 0;
-            
-            if (works.length === 0) {
-                list.innerHTML = `<div class="empty-state"><h3>Пока здесь пусто</h3><p style="margin-top:10px;">Нажмите кнопку "Код" и отправьте ссылку ученикам.</p></div>`;
+        <div class="tariff-card active" onclick="selectTariff(this, '5 проверок')">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="font-bold text-lg text-gray-800">5 проверок</div>
+                    <div class="text-sm text-green-600 font-medium">На месяц</div>
+                </div>
+                <div class="text-xl font-black">190 ₽</div>
+            </div>
+        </div>
+
+        <div class="tariff-card" onclick="selectTariff(this, '15 проверок')">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="font-bold text-lg text-gray-800">15 проверок</div>
+                    <div class="text-sm text-orange-500 font-medium text-xs bg-orange-100 px-2 py-0.5 rounded mt-1 inline-block">Хит продаж</div>
+                </div>
+                <div class="text-xl font-black">450 ₽</div>
+            </div>
+        </div>
+
+        <div class="tariff-card" onclick="selectTariff(this, 'Безлимит (Месяц)')">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="font-bold text-lg text-gray-800">Безлимит</div>
+                    <div class="text-sm text-purple-600 font-medium">Пиши без ограничений</div>
+                </div>
+                <div class="text-xl font-black">990 ₽</div>
+            </div>
+        </div>
+
+        <button onclick="buyTariff()" class="w-full bg-blue-500 text-white font-bold py-3.5 rounded-xl mt-4 active:bg-blue-600 shadow-md">
+            Оплатить
+        </button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); 
+        
+        const chatId = tg.initDataUnsafe?.user?.id || '123456789';
+        const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-user-data?chat_id=${chatId}`.trim();
+
+        let selectedPackage = '5 проверок';
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch(WEBHOOK_URL);
+                if (!res.ok) throw new Error('Network error');
+                const data = await res.json();
                 
-                document.getElementById('stat-total').innerText = 0;
-                document.getElementById('stat-students').innerText = studentsCount;
-                document.getElementById('stat-avg').innerText = "0.0";
-                analyticsPanel.style.display = 'grid';
-                return;
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+
+                document.getElementById('val-balance').innerText = data.balance !== undefined ? data.balance : 0;
+                
+                // РАСЧЕТ ЛИГ (ОТ БРОНЗЫ ДО ПЛАТИНЫ)
+                const history = data.history || [];
+                const worksCount = history.length;
+                document.getElementById('val-works-count').innerText = `${worksCount} работ сдали`;
+                
+                let league = "Бронза 🥉";
+                let leagueColor = "text-orange-400";
+                
+                if (worksCount >= 3) { league = "Серебро 🥈"; leagueColor = "text-gray-400"; }
+                if (worksCount >= 8) { league = "Золото 🥇"; leagueColor = "text-yellow-500"; }
+                if (worksCount >= 15) { league = "Платина 💎"; leagueColor = "text-cyan-500"; }
+                
+                const leagueEl = document.getElementById('val-league');
+                leagueEl.innerText = league;
+                leagueEl.className = `text-xl font-bold my-2 ${leagueColor}`;
+
+                const historyList = document.getElementById('history-list');
+                if (history.length > 0) {
+                    historyList.innerHTML = '';
+                    history.forEach(item => {
+                        const safeDate = item.date ? item.date.toString() : 'Недавно';
+                        historyList.innerHTML += `
+                            <div class="flex justify-between items-center py-3">
+                                <span class="text-gray-500 text-sm">${safeDate}</span>
+                                <span class="font-bold text-gray-800 text-lg">${item.score}/22</span>
+                            </div>`;
+                    });
+                } else {
+                    historyList.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">Работ пока нет</div>';
+                }
+
+                const trendData = (data.trend_scores && data.trend_scores.length > 0) ? data.trend_scores : [10, 14, 12, 18, 20];
+                const radarData = (data.radar_scores && data.radar_scores.length > 0) ? data.radar_scores : [85, 88, 90, 100, 100, 100];
+                
+                renderTrendChart(trendData);
+                renderRadarChart(radarData);
+
+            } catch (e) {
+                document.getElementById('loader').style.display = 'none';
+                tg.showAlert(`Ошибка связи: ${e.message}`);
             }
-            
-            const totalWorks = works.length;
-            const avgScore = works.reduce((acc, curr) => acc + curr.totalScore, 0) / totalWorks;
-            
-            document.getElementById('stat-total').innerText = totalWorks;
-            document.getElementById('stat-students').innerText = studentsCount;
-            document.getElementById('stat-avg').innerText = avgScore.toFixed(1);
-            analyticsPanel.style.display = 'grid';
-
-            renderStudents(works);
-            
-            const now = new Date();
-            updateIndicator.innerText = `Обновлено: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-
-        } catch (error) {
-            console.error(error);
         }
-    }
 
-    function renderStudents(works) {
-        const list = document.getElementById('students-list');
-        list.innerHTML = '';
-        works.forEach(student => {
-            const card = document.createElement('div');
-            card.className = 'student-card';
-            let criteriaHtml = '';
-            for (const [key, val] of Object.entries(student.criteria)) {
-                criteriaHtml += `<div class="crit-badge"><span class="crit-name">${key}</span><span class="crit-score">${val}</span></div>`;
-            }
-            card.innerHTML = `
-                <div class="card-header" onclick="toggleCard(this)">
-                    <div class="student-name">${student.studentName}</div>
-                    <div class="student-score">${student.totalScore} баллов</div>
-                </div>
-                <div class="card-body">
-                    <div class="criteria-grid">${criteriaHtml}</div>
-                    <div class="ai-comment"><strong>🤖 Разбор ИИ:</strong><br>${student.aiComment}</div>
-                    <div class="essay-text">${student.rawText}</div>
-                </div>
-            `;
-            list.appendChild(card);
-        });
-    }
+        function renderTrendChart(scores) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            const labels = scores.map((_, i) => `#${i + 1}`);
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Баллы', data: scores, borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 3,
+                        pointBackgroundColor: '#3b82f6', pointRadius: 4, fill: true, tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 22, grid: { color: '#f3f4f6' } }, x: { grid: { display: false } } }
+                }
+            });
+        }
 
-    function toggleCard(element) {
-        element.parentElement.classList.toggle('active');
-    }
+        function renderRadarChart(scores) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Орфограф.', 'Пунктуац.', 'Граммат.', 'Речь', 'Логика', 'Факты'],
+                    datasets: [{ data: scores, backgroundColor: '#f97316', borderRadius: 4 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100, grid: { color: '#f3f4f6' } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+                }
+            });
+        }
 
-    window.onload = () => {
-        loadData();
-        setInterval(loadData, 30000);
-    };
-</script>
+        function openTariffs() {
+            document.getElementById('modal-overlay').style.display = 'block';
+            document.getElementById('tariffs-modal').classList.add('open');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
 
+        function closeTariffs() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('tariffs-modal').classList.remove('open');
+        }
+
+        function selectTariff(element, name) {
+            document.querySelectorAll('.tariff-card').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            selectedPackage = name;
+            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+        }
+
+        function buyTariff() {
+            closeTariffs();
+            tg.sendData(JSON.stringify({ action: 'buy', package: selectedPackage }));
+            tg.close();
+        }
+
+        window.onload = loadDashboard;
+    </script>
 </body>
 </html>
