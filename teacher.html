@@ -14,7 +14,7 @@
         .logo { font-size: 20px; font-weight: 800; color: #2c3e50; }
         .code-btn { background: #e8f4fd; color: #3498db; border: 1px solid #3498db; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
         
-        /* Блок Аналитики (3 карточки) */
+        /* Блок Аналитики */
         .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-left: 4px solid #3498db; }
         .stat-card.full { grid-column: span 2; border-left-color: #2ecc71; }
@@ -99,14 +99,12 @@
             const data = await response.json();
             loader.style.display = 'none';
             
-            // Защита: если n8n вернул пустой массив или нет объекта works
             const works = data.works || [];
             const studentsCount = data.studentsCount || 0;
             
             if (works.length === 0) {
                 list.innerHTML = `<div class="empty-state"><h3>Пока здесь пусто</h3><p style="margin-top:10px;">Отправьте ученикам свой код <b>${teacherId}</b>. <br>Как только они сдадут сочинения, результаты появятся здесь.</p></div>`;
                 
-                // Даже если нет работ, покажем сколько учеников привязалось
                 document.getElementById('stat-total').innerText = 0;
                 document.getElementById('stat-students').innerText = studentsCount;
                 document.getElementById('stat-avg').innerText = "0.0";
@@ -114,7 +112,6 @@
                 return;
             }
             
-            // Рендер аналитики
             const totalWorks = works.length;
             const avgScore = works.reduce((acc, curr) => acc + curr.totalScore, 0) / totalWorks;
             
@@ -164,7 +161,7 @@
 
     window.onload = () => {
         loadData();
-        setInterval(loadData, 30000); // Авто-обновление каждые 30 секунд
+        setInterval(loadData, 30000);
     };
 </script>
 
