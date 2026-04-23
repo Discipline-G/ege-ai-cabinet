@@ -8,17 +8,18 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f4f7f6; color: #333; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 800px; margin: 0 auto; padding-bottom: 40px; }
         
         header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .logo { font-size: 20px; font-weight: 800; color: #2c3e50; }
         .code-btn { background: #e8f4fd; color: #3498db; border: 1px solid #3498db; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
         
-        /* Блок Аналитики */
+        /* Блок Аналитики (3 карточки) */
         .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-left: 4px solid #3498db; }
+        .stat-card.full { grid-column: span 2; border-left-color: #2ecc71; }
         .stat-value { font-size: 28px; font-weight: 800; color: #2c3e50; margin-top: 5px; }
-        .stat-label { font-size: 13px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-label { font-size: 13px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
 
         .student-card { background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
         .card-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fff; transition: background 0.2s; }
@@ -39,6 +40,7 @@
         
         .loader { text-align: center; padding: 40px; color: #7f8c8d; font-weight: 600;}
         .empty-state { text-align: center; padding: 40px; color: #7f8c8d; background: #fff; border-radius: 8px; margin-top: 20px;}
+        .update-indicator { text-align: center; font-size: 12px; color: #bdc3c7; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -56,13 +58,18 @@
             <div class="stat-label">Проверено работ</div>
             <div class="stat-value" id="stat-total">0</div>
         </div>
-        <div class="stat-card" style="border-left-color: #2ecc71;">
-            <div class="stat-label">Средний балл</div>
+        <div class="stat-card" style="border-left-color: #f39c12;">
+            <div class="stat-label">Учеников в классе</div>
+            <div class="stat-value" id="stat-students">0</div>
+        </div>
+        <div class="stat-card full">
+            <div class="stat-label">Средний балл класса</div>
             <div class="stat-value" id="stat-avg">0</div>
         </div>
     </div>
 
     <div id="students-list"></div>
+    <div id="last-update" class="update-indicator"></div>
 </div>
 
 <script>
@@ -84,6 +91,7 @@
         const list = document.getElementById('students-list');
         const loader = document.getElementById('loader');
         const analyticsPanel = document.getElementById('analytics-panel');
+        const updateIndicator = document.getElementById('last-update');
         
         try {
             const response = await fetch(WEBHOOK_URL);
@@ -91,28 +99,44 @@
             const data = await response.json();
             loader.style.display = 'none';
             
-            if (!data || data.length === 0) {
+            // Защита: если n8n вернул пустой массив или нет объекта works
+            const works = data.works || [];
+            const studentsCount = data.studentsCount || 0;
+            
+            if (works.length === 0) {
                 list.innerHTML = `<div class="empty-state"><h3>Пока здесь пусто</h3><p style="margin-top:10px;">Отправьте ученикам свой код <b>${teacherId}</b>. <br>Как только они сдадут сочинения, результаты появятся здесь.</p></div>`;
+                
+                // Даже если нет работ, покажем сколько учеников привязалось
+                document.getElementById('stat-total').innerText = 0;
+                document.getElementById('stat-students').innerText = studentsCount;
+                document.getElementById('stat-avg').innerText = "0.0";
+                analyticsPanel.style.display = 'grid';
                 return;
             }
             
             // Рендер аналитики
-            const totalWorks = data.length;
-            const avgScore = data.reduce((acc, curr) => acc + curr.totalScore, 0) / totalWorks;
+            const totalWorks = works.length;
+            const avgScore = works.reduce((acc, curr) => acc + curr.totalScore, 0) / totalWorks;
+            
             document.getElementById('stat-total').innerText = totalWorks;
+            document.getElementById('stat-students').innerText = studentsCount;
             document.getElementById('stat-avg').innerText = avgScore.toFixed(1);
             analyticsPanel.style.display = 'grid';
 
-            renderStudents(data);
+            renderStudents(works);
+            
+            const now = new Date();
+            updateIndicator.innerText = `Обновлено: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
         } catch (error) {
-            loader.innerText = "Ошибка загрузки. Проверьте сервер n8n.";
+            console.error(error);
         }
     }
 
-    function renderStudents(data) {
+    function renderStudents(works) {
         const list = document.getElementById('students-list');
         list.innerHTML = '';
-        data.forEach(student => {
+        works.forEach(student => {
             const card = document.createElement('div');
             card.className = 'student-card';
             let criteriaHtml = '';
@@ -126,7 +150,7 @@
                 </div>
                 <div class="card-body">
                     <div class="criteria-grid">${criteriaHtml}</div>
-                    <div class="ai-comment"><strong>🤖 Главная ошибка:</strong><br>${student.aiComment}</div>
+                    <div class="ai-comment"><strong>🤖 Разбор ИИ:</strong><br>${student.aiComment}</div>
                     <div class="essay-text">${student.rawText}</div>
                 </div>
             `;
@@ -138,7 +162,10 @@
         element.parentElement.classList.toggle('active');
     }
 
-    window.onload = loadData;
+    window.onload = () => {
+        loadData();
+        setInterval(loadData, 30000); // Авто-обновление каждые 30 секунд
+    };
 </script>
 
 </body>
