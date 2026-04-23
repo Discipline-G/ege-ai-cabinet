@@ -14,7 +14,6 @@
         .logo { font-size: 20px; font-weight: 800; color: #2c3e50; }
         .code-btn { background: #e8f4fd; color: #3498db; border: 1px solid #3498db; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; }
         
-        /* Блок Аналитики */
         .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; border-left: 4px solid #3498db; }
         .stat-card.full { grid-column: span 2; border-left-color: #2ecc71; }
@@ -80,11 +79,11 @@
     const copyBtn = document.getElementById('copy-btn');
     copyBtn.innerText = `Код: ${teacherId}`;
 
+    // ИСПРАВЛЕНА ССЫЛКА НА ТВОЕГО БОТА
     function copyCode() {
-        // ВАЖНО: Замени PROVERYAI_BOT на реальный юзернейм твоего бота!
-        const inviteLink = `https://t.me/PROVERYAI_BOT?start=teacher_${teacherId}`;
+        const inviteLink = `https://t.me/ru_repetitor_bot?start=teacher_${teacherId}`;
         navigator.clipboard.writeText(inviteLink);
-        tg.showAlert(`Ссылка скопирована!\n\nОтправьте её ученикам. При переходе по ней они автоматически привяжутся к вашему классу.`);
+        tg.showAlert(`Ссылка скопирована!\n\nОтправьте её ученикам. Они автоматически привяжутся к вашему классу после перехода.`);
     }
 
     const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
@@ -105,7 +104,7 @@
             const studentsCount = data.studentsCount || 0;
             
             if (works.length === 0) {
-                list.innerHTML = `<div class="empty-state"><h3>Пока здесь пусто</h3><p style="margin-top:10px;">Отправьте ученикам свой код <b>${teacherId}</b>. <br>Как только они сдадут сочинения, результаты появятся здесь.</p></div>`;
+                list.innerHTML = `<div class="empty-state"><h3>Пока здесь пусто</h3><p style="margin-top:10px;">Нажмите кнопку "Код" и отправьте ссылку ученикам.</p></div>`;
                 
                 document.getElementById('stat-total').innerText = 0;
                 document.getElementById('stat-students').innerText = studentsCount;
