@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ПРОВЕРЯЙ: Дашборд Учителя</title>
+    <title>ПРОВЕРЯЙ: Кабинет Ученика</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -30,165 +30,97 @@
 
     <div id="app" class="max-w-md mx-auto space-y-6 hidden pb-10">
         
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight">Мой класс</h1>
-            <div class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 border border-green-200 font-medium">
-                SaaS Активен
+        <div class="flex justify-between items-center mt-2">
+            <h1 class="text-2xl font-bold tracking-tight">Мой кабинет</h1>
+            <div class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200 font-medium">
+                Ученик
             </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-3">
-            <div class="card rounded-xl p-3 text-center shadow-sm">
-                <p class="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Учеников</p>
-                <p class="text-xl font-semibold" id="val-students">-</p>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="card rounded-xl p-4 text-center shadow-sm">
+                <p class="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Осталось проверок</p>
+                <p class="text-3xl font-bold text-blue-600" id="val-balance">-</p>
             </div>
-            <div class="card rounded-xl p-3 text-center shadow-sm">
+            <div class="card rounded-xl p-4 text-center shadow-sm">
                 <p class="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Сдано работ</p>
-                <p class="text-xl font-semibold" id="val-works">-</p>
+                <p class="text-3xl font-bold" id="val-works">-</p>
             </div>
-            <div class="card rounded-xl p-3 text-center shadow-sm">
-                <p class="text-[10px] sm:text-xs text-gray-500 mb-1 uppercase tracking-wide">Ср. Балл</p>
-                <p class="text-xl font-semibold text-blue-600" id="val-avg">-</p>
-            </div>
-        </div>
-
-        <div class="card rounded-xl p-4 shadow-sm">
-            <h2 class="text-sm font-semibold uppercase tracking-wider text-red-500 mb-3 flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                Красная зона класса
-            </h2>
-            <div id="error-list" class="space-y-2 text-sm">
-                </div>
         </div>
 
         <div class="card rounded-xl shadow-sm overflow-hidden">
             <div class="p-3 border-b border-gray-100 bg-opacity-50" style="background-color: var(--tg-theme-bg-color)">
-                <h2 class="text-sm font-semibold">Аналитика по ученикам</h2>
+                <h2 class="text-sm font-semibold">История проверок</h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead>
-                        <tr class="text-xs text-gray-500 border-b" style="border-color: var(--tg-theme-hint-color)">
-                            <th class="p-3 font-medium">Имя</th>
-                            <th class="p-3 font-medium text-center">Работ</th>
-                            <th class="p-3 font-medium text-right">Ср. Балл</th>
-                        </tr>
-                    </thead>
-                    <tbody id="student-table" class="divide-y" style="border-color: var(--tg-theme-hint-color)">
+                    <tbody id="history-list" class="divide-y" style="border-color: var(--tg-theme-hint-color)">
                         </tbody>
                 </table>
             </div>
         </div>
 
-        <button onclick="generateInvite()" class="btn-primary w-full py-3.5 rounded-xl font-semibold shadow-md transition active:scale-95 flex justify-center items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-            Получить код для учеников
+        <button onclick="getRefBonus()" class="btn-primary w-full py-3.5 rounded-xl font-semibold shadow-md transition active:scale-95 flex justify-center items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+            Получить бесплатные проверки
         </button>
     </div>
 
     <script>
-        // Инициализация Telegram Web App
         const tg = window.Telegram.WebApp;
         tg.expand(); 
         tg.ready();
 
-        // Боевые эндпоинты n8n (Оба теперь используют GET)
-        const GET_DASHBOARD_URL = 'https://45.131.183.101.sslip.io/webhook/teacher/dashboard';
-        const GENERATE_CODE_URL = 'https://45.131.183.101.sslip.io/webhook/teacher/generate_code';
-        
-        // Получение ID
         const chatId = tg.initDataUnsafe?.user?.id || 123456789;
+        
+        // URL к n8n (очищенный от пробелов для безопасности iOS)
+        const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-user-data?chat_id=${chatId}`.trim();
 
-        // Главная функция загрузки данных
         async function loadDashboard() {
             try {
-                const res = await fetch(`${GET_DASHBOARD_URL}?chat_id=${chatId}`);
-                
-                // Обработка просроченной подписки
-                if (res.status === 403) {
-                    document.getElementById('loader').style.display = 'none';
-                    tg.showAlert("Ваша SaaS-подписка истекла. Продлите доступ через главное меню бота.");
-                    setTimeout(() => tg.close(), 2000);
-                    return;
-                }
-                
+                const res = await fetch(WEBHOOK_URL);
+                if (!res.ok) throw new Error('Сбой сети');
                 const data = await res.json();
-                renderUI(data);
+                
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+
+                // Заполняем дашборд
+                document.getElementById('val-balance').innerText = data.balance || 0;
+                const history = data.history || [];
+                document.getElementById('val-works').innerText = history.length;
+
+                // Заполняем историю
+                const list = document.getElementById('history-list');
+                if (history.length > 0) {
+                    list.innerHTML = '';
+                    history.forEach(item => {
+                        const safeDate = item.date ? item.date.toString() : 'Недавно';
+                        list.innerHTML += `
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="p-3 text-gray-500 text-xs flex items-center">
+                                    <svg class="w-4 h-4 mr-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    ${safeDate}
+                                </td>
+                                <td class="p-3 text-right font-bold text-gray-800">${item.score} баллов</td>
+                            </tr>`;
+                    });
+                } else {
+                    list.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-gray-500 text-xs">Вы еще не отправляли работы на проверку.</td></tr>';
+                }
             } catch (e) {
                 document.getElementById('loader').style.display = 'none';
-                tg.showAlert(`Ошибка связи: ${e.message}`);
+                tg.showAlert(`Ошибка связи с сервером. Попробуйте позже.`);
             }
         }
 
-        // Отрисовка интерфейса
-        function renderUI(data) {
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-
-            // 1. Сводка
-            document.getElementById('val-students').innerText = data.summary?.students_count || 0;
-            document.getElementById('val-works').innerText = data.summary?.total_works || 0;
-            document.getElementById('val-avg').innerText = data.summary?.class_avg || 0;
-
-            // 2. Красная зона (Ошибки)
-            const errorList = document.getElementById('error-list');
-            if (data.summary?.top_errors && data.summary.top_errors.length > 0) {
-                errorList.innerHTML = '';
-                data.summary.top_errors.forEach(err => {
-                    errorList.innerHTML += `
-                        <div class="flex justify-between items-center bg-red-50 text-red-800 p-2.5 rounded-lg border border-red-100">
-                            <span class="font-medium">${err.criteria}</span>
-                            <span class="text-xs font-bold px-2 py-1 bg-red-200 text-red-900 rounded-full">${err.count} провалов</span>
-                        </div>`;
-                });
-            } else {
-                errorList.innerHTML = '<p class="text-gray-500 italic text-center py-2">Работ пока нет или ошибки отсутствуют 🎉</p>';
-            }
-
-            // 3. Таблица учеников
-            const tbody = document.getElementById('student-table');
-            if (data.students && data.students.length > 0) {
-                tbody.innerHTML = '';
-                data.students.forEach(s => {
-                    // Зеленый цвет для высоких баллов (>= 18), серый для остальных
-                    const scoreColor = (s.avg_score >= 18) ? 'text-green-600' : 'text-gray-800';
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="p-3 font-medium">${s.username || 'Ученик'}</td>
-                            <td class="p-3 text-center text-gray-600">${s.works}</td>
-                            <td class="p-3 text-right font-bold ${scoreColor}">${s.avg_score || '-'}</td>
-                        </tr>`;
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-500">Учеников пока нет. Отправьте им код-приглашение.</td></tr>';
-            }
-        }
-
-        // Генерация инвайт-кода (Переписано на GET)
-        async function generateInvite() {
+        // Вызов подсказки для рефералки
+        function getRefBonus() {
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            
-            tg.showConfirm("Сгенерировать новый код? Старый код перестанет работать для новых учеников.", async (confirmed) => {
-                if (!confirmed) return;
-                
-                try {
-                    // Отправляем GET-запрос вместо POST для обхода CORS preflight
-                    const res = await fetch(`${GENERATE_CODE_URL}?chat_id=${chatId}`);
-                    const data = await res.json();
-                    
-                    if(data.invite_code) {
-                        tg.showAlert(`Ваш код:\n\n${data.invite_code}\n\nУченик должен отправить его боту, чтобы привязаться к вашему классу.`);
-                    } else {
-                        tg.showAlert("Не удалось сгенерировать код. Убедитесь, что вы зарегистрированы как Учитель.");
-                    }
-                } catch (e) {
-                    tg.showAlert(`Ошибка генерации: ${e.message}`);
-                }
-            });
+            tg.showAlert(`Чтобы получить бонусные проверки, отправьте боту команду /invite или выберите "🎁 Бонус" в меню!`);
         }
 
-        // Запуск
-        loadDashboard();
+        window.onload = loadDashboard;
     </script>
 </body>
 </html>
