@@ -15,7 +15,7 @@
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        .marked-error b { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 0 2px; border-radius: 2px; }
+        .marked-error b { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 0 2px; border-radius: 2px; font-weight: normal; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 pb-12">
@@ -87,13 +87,12 @@
                 <div id="modal-ai-comment" class="text-sm text-yellow-200/80 whitespace-pre-wrap"></div>
             </div>
 
-            <div class="mb-4 bg-blue-900/20 border border-blue-600/30 p-3 rounded-lg">
-                <h4 class="text-xs font-bold text-blue-400 uppercase mb-2">💡 Рекомендации для ученика</h4>
-                <ul class="text-sm text-blue-200/80 list-disc pl-5 space-y-1">
-                    <li>Внимательно изучить слова и знаки, выделенные <span class="bg-red-500/20 text-red-300 px-1 rounded">красным цветом</span> в тексте.</li>
-                    <li>Сделать работу над ошибками: выписать правильные варианты слов.</li>
-                    <li>Повторить правила орфографии и пунктуации по кодификатору ФИПИ.</li>
-                    <li>Обратить внимание на логические переходы между абзацами (К5/СК3).</li>
+            <div class="mb-4 bg-purple-900/20 border border-purple-600/30 p-3 rounded-lg">
+                <h4 class="text-xs font-bold text-purple-400 uppercase mb-2">👨‍🏫 План действий (Методичка)</h4>
+                <ul class="text-sm text-purple-200/80 list-disc pl-5 space-y-1">
+                    <li>Разберите с учеником подсвеченные ошибки в тексте (красные выделения).</li>
+                    <li>Сверьтесь с графиком: если проседает <b>Грамотность</b>, выдайте тесты на орфографию.</li>
+                    <li>Если страдает <b>Содержание</b>, проработайте логику абзацев и аргументацию (К5/СК3).</li>
                 </ul>
             </div>
 
@@ -117,16 +116,15 @@
     }
 
     let charts = {}; 
-    let openStudentIds = new Set(); // Запоминаем открытые карточки для защиты от сброса
+    let openStudentIds = new Set(); 
     let activeChartTypes = {}; 
     window.GlobalStudentsData = {};
 
     const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
 
     async function loadData() {
-        // БЛОКИРУЕМ ПЕРЕРИСОВКУ, ЕСЛИ УЧИТЕЛЬ ЧТО-ТО ЧИТАЕТ
+        // Блокируем сброс, если учитель смотрит ученика
         if (openStudentIds.size > 0 || !document.getElementById('work-modal').classList.contains('hidden')) {
-            console.log('Обновление на паузе: открыта карточка или модалка');
             return;
         }
 
@@ -147,7 +145,6 @@
         }
     }
 
-    // Универсальный парсер критериев (решает проблему нулей на графиках)
     function calculateSubScores(criteria) {
         let content = 0; let literacy = 0;
         for (let [k, v] of Object.entries(criteria)) {
@@ -162,7 +159,7 @@
         return { content, literacy };
     }
 
-    // Парсер даты
+    // Парсер дат для графиков и списка
     function formatDate(dateString, fallbackIndex) {
         if (!dateString) return `#${fallbackIndex}`;
         const d = new Date(dateString);
@@ -170,8 +167,27 @@
         return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
     }
 
+    // Жесткий парсер для мусора [object Object]
+    function safeParseAIComment(errorsList) {
+        if (!errorsList || !Array.isArray(errorsList) || errorsList.length === 0) {
+            return "Ошибок не найдено. Отличная работа!";
+        }
+        
+        let cleanErrors = errorsList.map(err => {
+            if (typeof err === 'string') return err;
+            if (typeof err === 'object') {
+                return err.error || err.message || err.text || JSON.stringify(err);
+            }
+            return String(err);
+        });
+
+        return cleanErrors.join('\n');
+    }
+
     function processAndRender(works) {
         if (!works || works.length === 0) return;
+
+        const currentScroll = window.scrollY;
 
         const studentsMap = {};
         const classCriteriaStats = {};
@@ -183,16 +199,14 @@
             const score = Number(w.total_score ?? w.totalScore ?? 0);
             const exam = (w.exam_type || w.examType || 'Экзамен').toUpperCase();
             
-            // Ищем дату в объекте (может быть created_at, timestamp, date)
             const workDate = w.created_at || w.date || w.timestamp || null;
 
             let report = typeof w.report_json === 'string' ? JSON.parse(w.report_json || '{}') : (w.report_json || {});
             let criteria = w.criteria || report.criteria_breakdown || {};
             if (typeof criteria === 'string') { try { criteria = JSON.parse(criteria); } catch(e) { criteria = {}; } }
 
-            let errorsList = report.errors_list || [];
+            let aiComment = safeParseAIComment(report.errors_list);
             let markedText = report.marked_text || report.transcribed_text || w.rawText || "Текст не распознан";
-            let aiComment = errorsList.length > 0 ? errorsList.join('\n') : (w.aiComment || "Ошибок не найдено. Отличная работа!");
 
             const subScores = calculateSubScores(criteria);
 
@@ -237,7 +251,7 @@
 
         Object.entries(studentsMap).forEach(([cid, student]) => {
             const latestWork = student.works[0]; 
-            const chronWorks = [...student.works].reverse(); // Для графиков старые -> новые
+            const chronWorks = [...student.works].reverse(); 
             
             const datasets = {
                 total: chronWorks.map(w => w.score),
@@ -245,7 +259,6 @@
                 literacy: chronWorks.map(w => w.literacyScore)
             };
             
-            // Форматируем даты для подписей
             const labels = chronWorks.map((w, i) => formatDate(w.rawDate, i + 1));
 
             const card = document.createElement('div');
@@ -285,12 +298,18 @@
                         
                         <div class="flex flex-col h-full">
                             <div class="h-32 overflow-y-auto pr-2 space-y-2 mb-3">
-                                ${student.works.map((w, i) => `
+                                ${student.works.map((w, i) => {
+                                    // Чистим текст для превью списка
+                                    let preview = w.aiComment.replace(/\[object Object\]/g, '').split('\n')[0].substring(0, 35);
+                                    if(preview.length < 2) preview = "Подробный разбор ИИ...";
+                                    
+                                    return `
                                     <div class="bg-gray-800 p-2.5 rounded-lg border-l-2 ${w.score > 15 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center gap-2">
-                                        <div class="text-xs text-gray-300 truncate w-full"><span class="text-gray-500 mr-1">${formatDate(w.rawDate, student.works.length - i)}</span> ${w.aiComment.split('\n')[0].substring(0, 30)}...</div>
+                                        <div class="text-xs text-gray-300 truncate w-full"><span class="text-gray-500 mr-1">${formatDate(w.rawDate, student.works.length - i)}</span> ${preview}</div>
                                         <div class="text-sm font-bold text-white whitespace-nowrap">${w.score} б.</div>
                                     </div>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </div>
                             <button onclick="openModal('${cid}', 0)" class="w-full mt-auto bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded-lg text-sm border border-gray-600 transition-colors flex justify-center items-center gap-2">
                                 🔍 Открыть последний разбор
@@ -308,6 +327,8 @@
                 switchChart(cid, activeChartTypes[cid] || 'total');
             }
         });
+
+        window.scrollTo(0, currentScroll);
     }
 
     function initChart(cid) {
