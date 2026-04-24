@@ -31,7 +31,7 @@
     </header>
 
     <div id="loader" class="text-center py-10 text-gray-400 font-medium animate-pulse">
-        Синхронизация с ИИ-сервером...
+        Синхронизация с базой данных...
     </div>
     
     <div id="dashboard-content" class="hidden">
@@ -118,9 +118,8 @@
     const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
 
     async function loadData() {
-        // Блокируем сброс, если учитель смотрит ученика
         if (openStudentIds.size > 0 || !document.getElementById('work-modal').classList.contains('hidden')) {
-            return;
+            return; // Пауза автообновления
         }
 
         try {
@@ -154,39 +153,20 @@
         return { content, literacy };
     }
 
-    // Строгий парсер дат (Формат ДД-ММ-ГГ)
-    function formatDateStrict(dateString, fallbackIndex) {
-        if (!dateString) return `Работа #${fallbackIndex}`;
-        const d = new Date(dateString);
-        if (isNaN(d)) return `Работа #${fallbackIndex}`;
+    // Идеальный парсер дат (Формат: 24-04-26)
+    function formatDateStrict(dateString) {
+        const d = dateString ? new Date(dateString) : new Date();
+        if (isNaN(d)) return 'Неизвестно';
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const year = String(d.getFullYear()).slice(-2);
         return `${day}-${month}-${year}`;
     }
 
-    // Жесткий парсер для мусора [object Object]
-    function safeParseAIComment(errorsList) {
-        if (!errorsList || !Array.isArray(errorsList) || errorsList.length === 0) {
-            return "Ошибок не найдено. Отличная работа!";
-        }
-        
-        let cleanErrors = errorsList.map(err => {
-            if (typeof err === 'string') return err;
-            if (typeof err === 'object') {
-                return err.error || err.message || err.text || JSON.stringify(err);
-            }
-            return String(err);
-        });
-
-        return cleanErrors.join('\n');
-    }
-
     function processAndRender(works) {
         if (!works || works.length === 0) return;
 
         const currentScroll = window.scrollY;
-
         const studentsMap = {};
         const classCriteriaStats = {};
         let totalScoreSum = 0;
@@ -196,23 +176,20 @@
             const cid = w.chat_id || name;
             const score = Number(w.total_score ?? w.totalScore ?? 0);
             const exam = (w.exam_type || w.examType || 'Экзамен').toUpperCase();
-            
             const workDate = w.created_at || w.date || w.timestamp || null;
 
             let report = typeof w.report_json === 'string' ? JSON.parse(w.report_json || '{}') : (w.report_json || {});
             let criteria = w.criteria || report.criteria_breakdown || {};
             if (typeof criteria === 'string') { try { criteria = JSON.parse(criteria); } catch(e) { criteria = {}; } }
 
-            let aiComment = safeParseAIComment(report.errors_list);
             let markedText = report.marked_text || report.transcribed_text || w.rawText || "Текст не распознан";
-
             const subScores = calculateSubScores(criteria);
 
             if (!studentsMap[cid]) studentsMap[cid] = { name, exam, works: [] };
             
             studentsMap[cid].works.push({ 
                 score, contentScore: subScores.content, literacyScore: subScores.literacy, 
-                criteria, aiComment, markedText, rawDate: workDate 
+                criteria, markedText, rawDate: workDate 
             });
             totalScoreSum += score;
 
@@ -257,7 +234,7 @@
                 literacy: chronWorks.map(w => w.literacyScore)
             };
             
-            const labels = chronWorks.map((w, i) => formatDateStrict(w.rawDate, i + 1));
+            const labels = chronWorks.map((w) => formatDateStrict(w.rawDate));
 
             const card = document.createElement('div');
             card.className = 'bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-sm';
@@ -296,14 +273,12 @@
                         
                         <div class="flex flex-col h-full">
                             <div class="h-32 overflow-y-auto pr-2 space-y-2 mb-3">
-                                ${student.works.map((w, i) => {
-                                    // Очистка превью от багов парсера
-                                    let preview = w.aiComment.replace(/\[object Object\]/g, '').split('\n')[0].substring(0, 35);
-                                    if(preview.length < 2) preview = "Подробный разбор ИИ...";
-                                    
+                                ${student.works.map((w) => {
                                     return `
-                                    <div class="bg-gray-800 p-2.5 rounded-lg border-l-2 ${w.score > 15 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center gap-2">
-                                        <div class="text-xs text-gray-300 truncate w-full"><span class="text-gray-500 mr-1">${formatDateStrict(w.rawDate, student.works.length - i)}</span> ${preview}</div>
+                                    <div class="bg-gray-800 p-3 rounded-lg border-l-2 ${w.score > 15 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center gap-2">
+                                        <div class="text-sm text-gray-300 font-medium flex items-center gap-2">
+                                            <span class="text-gray-500">📅</span> Работа от ${formatDateStrict(w.rawDate)}
+                                        </div>
                                         <div class="text-sm font-bold text-white whitespace-nowrap">${w.score} б.</div>
                                     </div>
                                     `;
@@ -401,7 +376,7 @@
 
     function openModal(cid) {
         const student = window.GlobalStudentsData[cid];
-        const work = student.works[0]; // Всегда берем самую свежую работу
+        const work = student.works[0]; // Последняя работа
         
         document.getElementById('modal-title').innerText = `${student.name} • ${student.exam}`;
         document.getElementById('modal-score').innerText = work.score;
