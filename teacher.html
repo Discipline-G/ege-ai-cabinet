@@ -165,6 +165,23 @@
         return `${day}-${month}-${year}`;
     }
 
+    // Жесткий парсер для мусора [object Object]
+    function safeParseAIComment(errorsList) {
+        if (!errorsList || !Array.isArray(errorsList) || errorsList.length === 0) {
+            return "Ошибок не найдено. Отличная работа!";
+        }
+        
+        let cleanErrors = errorsList.map(err => {
+            if (typeof err === 'string') return err;
+            if (typeof err === 'object') {
+                return err.error || err.message || err.text || JSON.stringify(err);
+            }
+            return String(err);
+        });
+
+        return cleanErrors.join('\n');
+    }
+
     function processAndRender(works) {
         if (!works || works.length === 0) return;
 
@@ -186,16 +203,16 @@
             let criteria = w.criteria || report.criteria_breakdown || {};
             if (typeof criteria === 'string') { try { criteria = JSON.parse(criteria); } catch(e) { criteria = {}; } }
 
+            let aiComment = safeParseAIComment(report.errors_list);
             let markedText = report.marked_text || report.transcribed_text || w.rawText || "Текст не распознан";
 
             const subScores = calculateSubScores(criteria);
 
             if (!studentsMap[cid]) studentsMap[cid] = { name, exam, works: [] };
             
-            // ИИ-комментарий убран полностью
             studentsMap[cid].works.push({ 
                 score, contentScore: subScores.content, literacyScore: subScores.literacy, 
-                criteria, markedText, rawDate: workDate 
+                criteria, aiComment, markedText, rawDate: workDate 
             });
             totalScoreSum += score;
 
@@ -240,7 +257,6 @@
                 literacy: chronWorks.map(w => w.literacyScore)
             };
             
-            // Дата для графика остается короткой, чтобы не ломать верстку осей
             const labels = chronWorks.map((w, i) => formatDateStrict(w.rawDate, i + 1));
 
             const card = document.createElement('div');
@@ -281,15 +297,19 @@
                         <div class="flex flex-col h-full">
                             <div class="h-32 overflow-y-auto pr-2 space-y-2 mb-3">
                                 ${student.works.map((w, i) => {
+                                    // Очистка превью от багов парсера
+                                    let preview = w.aiComment.replace(/\[object Object\]/g, '').split('\n')[0].substring(0, 35);
+                                    if(preview.length < 2) preview = "Подробный разбор ИИ...";
+                                    
                                     return `
-                                    <div class="bg-gray-800 p-3 rounded-lg border-l-2 ${w.score > 15 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center gap-2">
-                                        <div class="text-sm text-gray-300 font-medium">Работа от ${formatDateStrict(w.rawDate, student.works.length - i)}</div>
+                                    <div class="bg-gray-800 p-2.5 rounded-lg border-l-2 ${w.score > 15 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center gap-2">
+                                        <div class="text-xs text-gray-300 truncate w-full"><span class="text-gray-500 mr-1">${formatDateStrict(w.rawDate, student.works.length - i)}</span> ${preview}</div>
                                         <div class="text-sm font-bold text-white whitespace-nowrap">${w.score} б.</div>
                                     </div>
                                     `;
                                 }).join('')}
                             </div>
-                            <button onclick="openModal('${cid}', ${index})" class="w-full mt-auto bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded-lg text-sm border border-gray-600 transition-colors flex justify-center items-center gap-2">
+                            <button onclick="openModal('${cid}')" class="w-full mt-auto bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded-lg text-sm border border-gray-600 transition-colors flex justify-center items-center gap-2">
                                 🔍 Открыть последний разбор
                             </button>
                         </div>
@@ -379,10 +399,9 @@
         }
     }
 
-    function openModal(cid, workIndex) {
-        // Убеждаемся, что workIndex ссылается на последнюю работу (которая под индексом 0 в массиве)
+    function openModal(cid) {
         const student = window.GlobalStudentsData[cid];
-        const work = student.works[0]; // Принудительно открываем последнюю работу
+        const work = student.works[0]; // Всегда берем самую свежую работу
         
         document.getElementById('modal-title').innerText = `${student.name} • ${student.exam}`;
         document.getElementById('modal-score').innerText = work.score;
