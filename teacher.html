@@ -52,9 +52,7 @@
         </div>
 
         <div class="mb-6">
-            <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                🔥 Слабые зоны класса
-            </h2>
+            <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">🔥 Слабые зоны класса</h2>
             <div id="class-heatmap" class="grid grid-cols-3 gap-3"></div>
         </div>
 
@@ -92,10 +90,10 @@
             <div class="mb-4 bg-blue-900/20 border border-blue-600/30 p-3 rounded-lg">
                 <h4 class="text-xs font-bold text-blue-400 uppercase mb-2">💡 Рекомендации для ученика</h4>
                 <ul class="text-sm text-blue-200/80 list-disc pl-5 space-y-1">
-                    <li>Внимательно изучить слова и знаки, выделенные <span class="bg-red-500/20 text-red-300 px-1 rounded">красным цветом</span> в тексте ниже.</li>
+                    <li>Внимательно изучить слова и знаки, выделенные <span class="bg-red-500/20 text-red-300 px-1 rounded">красным цветом</span> в тексте.</li>
                     <li>Сделать работу над ошибками: выписать правильные варианты слов.</li>
                     <li>Повторить правила орфографии и пунктуации по кодификатору ФИПИ.</li>
-                    <li>Обратить внимание на логические переходы между абзацами.</li>
+                    <li>Обратить внимание на логические переходы между абзацами (К5/СК3).</li>
                 </ul>
             </div>
 
@@ -115,18 +113,23 @@
     function copyCode() {
         const inviteLink = `https://t.me/ru_repetitor_bot?start=teacher_${teacherId}`;
         navigator.clipboard.writeText(inviteLink);
-        tg.showAlert(`Ссылка скопирована!\n\nОтправьте её ученикам. Они автоматически привяжутся к вашему классу и получат +1 бонусную проверку.`);
+        tg.showAlert(`Ссылка скопирована!\n\nОтправьте её ученикам. Они автоматически привяжутся к вашему классу.`);
     }
 
-    // ХРАНИЛИЩА СОСТОЯНИЯ (Чтобы не сбрасывало при автообновлении)
     let charts = {}; 
-    let openStudentIds = new Set(); // Запоминаем открытые аккордеоны
-    let activeChartTypes = {}; // Запоминаем выбранные типы графиков
+    let openStudentIds = new Set(); // Запоминаем открытые карточки для защиты от сброса
+    let activeChartTypes = {}; 
     window.GlobalStudentsData = {};
 
     const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
 
     async function loadData() {
+        // БЛОКИРУЕМ ПЕРЕРИСОВКУ, ЕСЛИ УЧИТЕЛЬ ЧТО-ТО ЧИТАЕТ
+        if (openStudentIds.size > 0 || !document.getElementById('work-modal').classList.contains('hidden')) {
+            console.log('Обновление на паузе: открыта карточка или модалка');
+            return;
+        }
+
         try {
             const response = await fetch(WEBHOOK_URL);
             if (!response.ok) throw new Error('Network error');
@@ -144,35 +147,45 @@
         }
     }
 
-    function calculateSubScores(criteria, examType) {
+    // Универсальный парсер критериев (решает проблему нулей на графиках)
+    function calculateSubScores(criteria) {
         let content = 0; let literacy = 0;
-        if (examType.includes('ОГЭ') || examType.includes('OGE')) {
-            content = (Number(criteria['СК1'])||0) + (Number(criteria['СК2'])||0) + (Number(criteria['СК3'])||0) + (Number(criteria['СК4'])||0);
-            literacy = (Number(criteria['ГК1'])||0) + (Number(criteria['ГК2'])||0) + (Number(criteria['ГК3'])||0) + (Number(criteria['ГК4'])||0);
-        } else {
-            content = (Number(criteria['К1'])||0) + (Number(criteria['К2'])||0) + (Number(criteria['К3'])||0) + (Number(criteria['К4'])||0) + (Number(criteria['К5'])||0) + (Number(criteria['К6'])||0);
-            literacy = (Number(criteria['К7'])||0) + (Number(criteria['К8'])||0) + (Number(criteria['К9'])||0) + (Number(criteria['К10'])||0);
+        for (let [k, v] of Object.entries(criteria)) {
+            k = k.toUpperCase().trim();
+            v = Number(v) || 0;
+            if (k.startsWith('ГК') || ['К7', 'К8', 'К9', 'К10'].includes(k)) {
+                literacy += v;
+            } else if (k.startsWith('К') || k.startsWith('СК') || k.startsWith('ФК')) {
+                content += v;
+            }
         }
         return { content, literacy };
+    }
+
+    // Парсер даты
+    function formatDate(dateString, fallbackIndex) {
+        if (!dateString) return `#${fallbackIndex}`;
+        const d = new Date(dateString);
+        if (isNaN(d)) return `#${fallbackIndex}`;
+        return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
     }
 
     function processAndRender(works) {
         if (!works || works.length === 0) return;
 
-        // Сохраняем текущую позицию скролла перед перерисовкой
-        const currentScroll = window.scrollY;
-
         const studentsMap = {};
         const classCriteriaStats = {};
         let totalScoreSum = 0;
 
-        // Агрегация данных
         works.forEach(w => {
             const name = w.student_name || w.studentName || 'Неизвестный';
             const cid = w.chat_id || name;
             const score = Number(w.total_score ?? w.totalScore ?? 0);
             const exam = (w.exam_type || w.examType || 'Экзамен').toUpperCase();
             
+            // Ищем дату в объекте (может быть created_at, timestamp, date)
+            const workDate = w.created_at || w.date || w.timestamp || null;
+
             let report = typeof w.report_json === 'string' ? JSON.parse(w.report_json || '{}') : (w.report_json || {});
             let criteria = w.criteria || report.criteria_breakdown || {};
             if (typeof criteria === 'string') { try { criteria = JSON.parse(criteria); } catch(e) { criteria = {}; } }
@@ -181,11 +194,14 @@
             let markedText = report.marked_text || report.transcribed_text || w.rawText || "Текст не распознан";
             let aiComment = errorsList.length > 0 ? errorsList.join('\n') : (w.aiComment || "Ошибок не найдено. Отличная работа!");
 
-            const subScores = calculateSubScores(criteria, exam);
+            const subScores = calculateSubScores(criteria);
 
             if (!studentsMap[cid]) studentsMap[cid] = { name, exam, works: [] };
             
-            studentsMap[cid].works.push({ score, contentScore: subScores.content, literacyScore: subScores.literacy, criteria, aiComment, markedText });
+            studentsMap[cid].works.push({ 
+                score, contentScore: subScores.content, literacyScore: subScores.literacy, 
+                criteria, aiComment, markedText, rawDate: workDate 
+            });
             totalScoreSum += score;
 
             for (let [crit, val] of Object.entries(criteria)) {
@@ -197,12 +213,10 @@
 
         window.GlobalStudentsData = studentsMap;
 
-        // Метрики
         document.getElementById('stat-total').innerText = works.length;
         document.getElementById('stat-students').innerText = Object.keys(studentsMap).length;
         document.getElementById('stat-avg').innerText = (totalScoreSum / works.length).toFixed(1);
 
-        // Тепловая карта
         const heatmapContainer = document.getElementById('class-heatmap');
         heatmapContainer.innerHTML = ''; 
         Object.entries(classCriteriaStats)
@@ -217,27 +231,28 @@
                     </div>`;
             });
 
-        // Список студентов
         const list = document.getElementById('students-list');
         list.innerHTML = '';
-        charts = {}; // Сбрасываем старые графики
+        charts = {}; 
 
         Object.entries(studentsMap).forEach(([cid, student]) => {
             const latestWork = student.works[0]; 
-            const chronWorks = [...student.works].reverse(); 
+            const chronWorks = [...student.works].reverse(); // Для графиков старые -> новые
             
             const datasets = {
                 total: chronWorks.map(w => w.score),
                 content: chronWorks.map(w => w.contentScore),
                 literacy: chronWorks.map(w => w.literacyScore)
             };
-            const labels = chronWorks.map((w, i) => `#${i+1}`);
+            
+            // Форматируем даты для подписей
+            const labels = chronWorks.map((w, i) => formatDate(w.rawDate, i + 1));
 
             const card = document.createElement('div');
             card.className = 'bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-sm';
             const scoreColor = latestWork.score >= 15 ? 'text-green-400 bg-green-400/10' : (latestWork.score >= 10 ? 'text-yellow-400 bg-yellow-400/10' : 'text-red-400 bg-red-400/10');
             
-            const isOpen = openStudentIds.has(cid); // Проверяем, был ли аккордеон открыт
+            const isOpen = openStudentIds.has(cid);
 
             card.innerHTML = `
                 <div class="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-750 transition-colors" onclick="toggleDetails('${cid}')">
@@ -260,8 +275,8 @@
                         <div class="flex flex-col">
                             <div class="flex bg-gray-800 rounded-lg p-1 border border-gray-700 mb-2 gap-1 overflow-x-auto">
                                 <button onclick="switchChart('${cid}', 'total')" class="flex-1 text-[10px] uppercase font-bold py-1.5 px-2 rounded whitespace-nowrap bg-blue-600 text-white transition-colors" id="btn-${cid}-total">📊 Общий балл</button>
-                                <button onclick="switchChart('${cid}', 'content')" class="flex-1 text-[10px] uppercase font-bold py-1.5 px-2 rounded whitespace-nowrap text-gray-400 hover:bg-gray-700 transition-colors" id="btn-${cid}-content" title="Логика и аргументация">📝 Содержание</button>
-                                <button onclick="switchChart('${cid}', 'literacy')" class="flex-1 text-[10px] uppercase font-bold py-1.5 px-2 rounded whitespace-nowrap text-gray-400 hover:bg-gray-700 transition-colors" id="btn-${cid}-literacy" title="Орфография и пунктуация">🔤 Грамотность</button>
+                                <button onclick="switchChart('${cid}', 'content')" class="flex-1 text-[10px] uppercase font-bold py-1.5 px-2 rounded whitespace-nowrap text-gray-400 hover:bg-gray-700 transition-colors" id="btn-${cid}-content">📝 Содержание</button>
+                                <button onclick="switchChart('${cid}', 'literacy')" class="flex-1 text-[10px] uppercase font-bold py-1.5 px-2 rounded whitespace-nowrap text-gray-400 hover:bg-gray-700 transition-colors" id="btn-${cid}-literacy">🔤 Грамотность</button>
                             </div>
                             <div class="bg-gray-800 border border-gray-700 rounded-lg p-2 h-40 relative">
                                 <canvas id="chart-${cid}"></canvas>
@@ -272,7 +287,7 @@
                             <div class="h-32 overflow-y-auto pr-2 space-y-2 mb-3">
                                 ${student.works.map((w, i) => `
                                     <div class="bg-gray-800 p-2.5 rounded-lg border-l-2 ${w.score > 15 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center gap-2">
-                                        <div class="text-xs text-gray-300 truncate w-full">${w.aiComment.split('\n')[0].substring(0, 40)}...</div>
+                                        <div class="text-xs text-gray-300 truncate w-full"><span class="text-gray-500 mr-1">${formatDate(w.rawDate, student.works.length - i)}</span> ${w.aiComment.split('\n')[0].substring(0, 30)}...</div>
                                         <div class="text-sm font-bold text-white whitespace-nowrap">${w.score} б.</div>
                                     </div>
                                 `).join('')}
@@ -281,31 +296,20 @@
                                 🔍 Открыть последний разбор
                             </button>
                         </div>
-
                     </div>
                 </div>
             `;
             list.appendChild(card);
 
-            charts[cid] = {
-                initialized: false,
-                labels: labels,
-                datasets: datasets,
-                instance: null
-            };
+            charts[cid] = { initialized: false, labels: labels, datasets: datasets, instance: null };
 
-            // Восстанавливаем график, если аккордеон был открыт
             if (isOpen) {
                 initChart(cid);
                 switchChart(cid, activeChartTypes[cid] || 'total');
             }
         });
-
-        // Возвращаем скролл на место после перерисовки DOM
-        window.scrollTo(0, currentScroll);
     }
 
-    // Инициализация графика вынесена отдельно
     function initChart(cid) {
         if (!charts[cid] || charts[cid].initialized) return;
         const ctx = document.getElementById(`chart-${cid}`).getContext('2d');
@@ -328,7 +332,7 @@
                 responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
                 scales: {
                     y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
-                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af', maxRotation: 45, minRotation: 45 } }
                 }
             }
         });
@@ -336,7 +340,7 @@
     }
 
     function switchChart(cid, type) {
-        activeChartTypes[cid] = type; // Запоминаем выбор
+        activeChartTypes[cid] = type; 
         const chartObj = charts[cid];
         if (!chartObj || !chartObj.instance) return;
 
@@ -367,12 +371,12 @@
         const el = document.getElementById(`details-${cid}`);
         if (el.classList.contains('hidden')) {
             el.classList.remove('hidden');
-            openStudentIds.add(cid); // Запоминаем открытие
+            openStudentIds.add(cid); 
             initChart(cid);
             switchChart(cid, activeChartTypes[cid] || 'total');
         } else {
             el.classList.add('hidden');
-            openStudentIds.delete(cid); // Забываем при закрытии
+            openStudentIds.delete(cid); 
         }
     }
 
@@ -410,7 +414,7 @@
 
     window.onload = () => { 
         loadData(); 
-        setInterval(loadData, 30000); // Обновление раз в 30 секунд
+        setInterval(loadData, 30000); 
     };
 </script>
 
