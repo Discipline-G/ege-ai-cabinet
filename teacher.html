@@ -10,12 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* Стилизация скроллбара для истории работ */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        /* Стили для подсветки ошибок ИИ */
+        .marked-error b { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 0 2px; border-radius: 2px; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 pb-12">
@@ -26,7 +27,7 @@
             ПРОВЕРЯЙ
         </div>
         <button id="copy-btn" onclick="copyCode()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-md">
-            Код: Загрузка...
+            🎁 Пригласить класс
         </button>
     </header>
 
@@ -35,7 +36,6 @@
     </div>
     
     <div id="dashboard-content" class="hidden">
-        
         <div class="grid grid-cols-2 gap-4 mb-6">
             <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 text-center shadow-md">
                 <div class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-1">Проверено работ</div>
@@ -56,69 +56,97 @@
             <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                 🔥 Слабые зоны класса
             </h2>
-            <div id="class-heatmap" class="grid grid-cols-3 gap-3">
-                </div>
+            <div id="class-heatmap" class="grid grid-cols-3 gap-3"></div>
         </div>
 
         <div>
             <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">👨‍🎓 Детализация</h2>
-            <div id="students-list" class="space-y-3">
-                </div>
+            <div id="students-list" class="space-y-3"></div>
         </div>
-        
     </div>
 
     <div id="last-update" class="text-center text-xs text-gray-500 mt-8"></div>
 </div>
 
+<div id="work-modal" class="fixed inset-0 z-50 bg-black/80 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-gray-800 border border-gray-700 rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+        <div class="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800/90">
+            <h3 class="text-lg font-bold text-white" id="modal-title">Разбор работы</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
+        </div>
+        <div class="p-4 overflow-y-auto flex-1">
+            <div class="flex justify-between items-center mb-4">
+                <div class="text-3xl font-black text-white" id="modal-score">0</div>
+                <div class="text-xs text-gray-400 uppercase tracking-wide">Баллов</div>
+            </div>
+            <div class="mb-4">
+                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Разбалловка по ФИПИ</h4>
+                <div id="modal-criteria" class="grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
+            </div>
+            <div class="mb-4 bg-yellow-900/20 border border-yellow-600/30 p-3 rounded-lg">
+                <h4 class="text-xs font-bold text-yellow-500 uppercase mb-2">🤖 Диагноз эксперта</h4>
+                <div id="modal-ai-comment" class="text-sm text-yellow-200/80 whitespace-pre-wrap"></div>
+            </div>
+            <div>
+                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Текст работы (с ошибками)</h4>
+                <div id="modal-text" class="text-sm text-gray-300 leading-relaxed bg-gray-900 p-4 rounded-lg border border-gray-700 whitespace-pre-wrap marked-error"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    // 1. Инициализация Telegram
     const tg = window.Telegram.WebApp;
     tg.expand();
     const teacherId = tg.initDataUnsafe?.user?.id || 'TEST_MODE'; 
     
-    document.getElementById('copy-btn').innerText = `🎁 Пригласить класс`;
-
-    // 2. Логика инвайт-ссылки
     function copyCode() {
         const inviteLink = `https://t.me/ru_repetitor_bot?start=teacher_${teacherId}`;
         navigator.clipboard.writeText(inviteLink);
-        tg.showAlert(`Ссылка скопирована!\n\nОтправьте её ученикам. Они автоматически привяжутся к вашему классу после перехода и получат бонусные проверки.`);
+        tg.showAlert(`Ссылка скопирована!\n\nОтправьте её ученикам. Они автоматически привяжутся к вашему классу и получат +1 бонусную проверку.`);
     }
 
-    // Хранилище инстансов графиков, чтобы не плодить дубликаты
-    const charts = {};
+    const charts = {}; // Хранилище инстансов и данных графиков
+    window.GlobalStudentsData = {}; // Глобальное хранилище для модалок
 
-    // 3. Загрузка данных
     const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
 
     async function loadData() {
         try {
             const response = await fetch(WEBHOOK_URL);
-            if (!response.ok) throw new Error('Network response was not ok');
+            if (!response.ok) throw new Error('Network error');
             const data = await response.json();
             
             document.getElementById('loader').style.display = 'none';
             document.getElementById('dashboard-content').classList.remove('hidden');
             
-            // Поддержка обеих структур ответа n8n
-            const rawWorks = data.works || data || []; 
-            processAndRender(rawWorks);
+            processAndRender(data.works || data || []);
 
             const now = new Date();
             document.getElementById('last-update').innerText = `Синхронизировано: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
         } catch (error) {
-            console.error('Ошибка загрузки:', error);
-            document.getElementById('loader').innerText = '⚠️ Ошибка подключения к базе. Попробуйте перезапустить Mini App.';
+            console.error(error);
+            document.getElementById('loader').innerText = '⚠️ Ошибка подключения. Попробуйте перезапустить.';
         }
     }
 
-    // 4. Ядро обработки и рендера
+    // Вспомогательная функция: считаем грамотность и содержание из критериев
+    function calculateSubScores(criteria, examType) {
+        let content = 0; let literacy = 0;
+        if (examType.includes('ОГЭ') || examType.includes('OGE')) {
+            content = (Number(criteria['СК1'])||0) + (Number(criteria['СК2'])||0) + (Number(criteria['СК3'])||0) + (Number(criteria['СК4'])||0);
+            literacy = (Number(criteria['ГК1'])||0) + (Number(criteria['ГК2'])||0) + (Number(criteria['ГК3'])||0) + (Number(criteria['ГК4'])||0);
+        } else {
+            content = (Number(criteria['К1'])||0) + (Number(criteria['К2'])||0) + (Number(criteria['К3'])||0) + (Number(criteria['К4'])||0) + (Number(criteria['К5'])||0) + (Number(criteria['К6'])||0);
+            literacy = (Number(criteria['К7'])||0) + (Number(criteria['К8'])||0) + (Number(criteria['К9'])||0) + (Number(criteria['К10'])||0);
+        }
+        return { content, literacy };
+    }
+
     function processAndRender(works) {
         if (!works || works.length === 0) {
             document.getElementById('students-list').innerHTML = `
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-8 text-center text-gray-400">
-                    <div class="text-4xl mb-3">📭</div>
                     <h3 class="text-white font-bold mb-2">Работ пока нет</h3>
                     <p class="text-sm">Нажмите «Пригласить класс» и отправьте ссылку ученикам.</p>
                 </div>`;
@@ -129,31 +157,36 @@
         const classCriteriaStats = {};
         let totalScoreSum = 0;
 
-        // АГРЕГАЦИЯ
         works.forEach(w => {
-            // Нормализация данных (защита от разных ключей JSON)
             const name = w.student_name || w.studentName || 'Неизвестный';
             const cid = w.chat_id || name;
             const score = Number(w.total_score ?? w.totalScore ?? 0);
             const exam = (w.exam_type || w.examType || 'Экзамен').toUpperCase();
             
-            // Парсинг JSON критериев (если они пришли строкой)
-            let criteria = w.criteria || w.report_json?.criteria_breakdown || {};
-            if (typeof criteria === 'string') {
-                try { criteria = JSON.parse(criteria); } catch(e) { criteria = {}; }
-            }
+            let report = typeof w.report_json === 'string' ? JSON.parse(w.report_json || '{}') : (w.report_json || {});
+            let criteria = w.criteria || report.criteria_breakdown || {};
+            if (typeof criteria === 'string') { try { criteria = JSON.parse(criteria); } catch(e) { criteria = {}; } }
 
-            let errors = w.report_json?.errors_list || [];
-            if (w.aiComment) errors = [w.aiComment]; // Фолбэк на старую логику
+            let errorsList = report.errors_list || [];
+            let markedText = report.marked_text || report.transcribed_text || w.rawText || "Текст не распознан";
+            let aiComment = errorsList.length > 0 ? errorsList.join('\n') : (w.aiComment || "Ошибок не найдено. Отличная работа!");
 
-            // Группировка учеников
-            if (!studentsMap[cid]) {
-                studentsMap[cid] = { name, exam, works: [] };
-            }
-            studentsMap[cid].works.push({ score, criteria, errors });
+            const subScores = calculateSubScores(criteria, exam);
+
+            if (!studentsMap[cid]) studentsMap[cid] = { name, exam, works: [] };
+            
+            // Сохраняем работу для модалки и графиков
+            studentsMap[cid].works.push({ 
+                score, 
+                contentScore: subScores.content,
+                literacyScore: subScores.literacy,
+                criteria, 
+                aiComment, 
+                markedText 
+            });
+            
             totalScoreSum += score;
 
-            // Сбор статы для тепловой карты
             for (let [crit, val] of Object.entries(criteria)) {
                 if (!classCriteriaStats[crit]) classCriteriaStats[crit] = { total: 0, count: 0 };
                 classCriteriaStats[crit].total += Number(val);
@@ -161,128 +194,160 @@
             }
         });
 
-        const studentsCount = Object.keys(studentsMap).length;
-        const avgScore = totalScoreSum / works.length;
+        window.GlobalStudentsData = studentsMap; // В глобал для доступа из модалки
 
-        // Обновляем верхние метрики
+        // Рендер метрик
         document.getElementById('stat-total').innerText = works.length;
-        document.getElementById('stat-students').innerText = studentsCount;
-        document.getElementById('stat-avg').innerText = avgScore.toFixed(1);
+        document.getElementById('stat-students').innerText = Object.keys(studentsMap).length;
+        document.getElementById('stat-avg').innerText = (totalScoreSum / works.length).toFixed(1);
 
-        // РЕНДЕР ТЕПЛОВОЙ КАРТЫ (Топ-3 проблемных)
+        // Рендер тепловой карты
         const heatmapContainer = document.getElementById('class-heatmap');
         heatmapContainer.innerHTML = ''; 
-        
-        const weakPoints = Object.entries(classCriteriaStats)
+        Object.entries(classCriteriaStats)
             .map(([crit, data]) => ({ crit, avg: (data.total / data.count).toFixed(2) }))
-            .sort((a, b) => a.avg - b.avg) // Сортируем по возрастанию балла
-            .slice(0, 3); // Берем 3 самых плохих
+            .sort((a, b) => a.avg - b.avg)
+            .slice(0, 3)
+            .forEach(wp => {
+                heatmapContainer.innerHTML += `
+                    <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 text-center">
+                        <div class="text-red-400 font-bold text-lg">${wp.crit}</div>
+                        <div class="text-gray-400 text-[10px] uppercase">Ср: <span class="text-gray-200">${wp.avg}</span></div>
+                    </div>`;
+            });
 
-        weakPoints.forEach(wp => {
-            heatmapContainer.innerHTML += `
-                <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 text-center">
-                    <div class="text-red-400 font-bold text-lg">${wp.crit}</div>
-                    <div class="text-gray-400 text-[10px] uppercase">Ср. балл: <span class="text-gray-200">${wp.avg}</span></div>
-                </div>
-            `;
-        });
-
-        // РЕНДЕР КАРТОЧЕК УЧЕНИКОВ
+        // Рендер списка студентов
         const list = document.getElementById('students-list');
         list.innerHTML = '';
 
         Object.entries(studentsMap).forEach(([cid, student], index) => {
-            const latestWork = student.works[0]; // Предполагаем, что последняя сдача первая в массиве (или нужно отсортировать)
-            // Разворачиваем для графика (хронология: старые -> новые)
-            const chronologicalWorks = [...student.works].reverse();
-            const scoresForChart = chronologicalWorks.map(w => w.score);
-            const labelsForChart = chronologicalWorks.map((w, i) => `#${i+1}`);
+            const latestWork = student.works[0]; 
+            const chronWorks = [...student.works].reverse(); // Старые -> Новые
+            
+            // Подготовка датасетов для графика
+            const datasets = {
+                total: chronWorks.map(w => w.score),
+                content: chronWorks.map(w => w.contentScore),
+                literacy: chronWorks.map(w => w.literacyScore)
+            };
+            const labels = chronWorks.map((w, i) => `#${i+1}`);
 
             const card = document.createElement('div');
             card.className = 'bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-sm';
-            
-            // Цвет бейджа последней оценки
-            const scoreColor = latestWork.score > 15 ? 'text-green-400 bg-green-400/10' : (latestWork.score > 10 ? 'text-yellow-400 bg-yellow-400/10' : 'text-red-400 bg-red-400/10');
+            const scoreColor = latestWork.score >= 15 ? 'text-green-400 bg-green-400/10' : (latestWork.score >= 10 ? 'text-yellow-400 bg-yellow-400/10' : 'text-red-400 bg-red-400/10');
 
             card.innerHTML = `
                 <div class="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-750 transition-colors" onclick="toggleDetails('${cid}', ${index})">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg">
-                            ${student.name.charAt(0)}
-                        </div>
+                        <div class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg">${student.name.charAt(0)}</div>
                         <div>
                             <h3 class="text-white font-semibold">${student.name}</h3>
-                            <p class="text-xs text-gray-400">${student.exam} • Сдано работ: ${student.works.length}</p>
+                            <p class="text-xs text-gray-400">${student.exam} • Работ: ${student.works.length}</p>
                         </div>
                     </div>
                     <div class="text-right">
                         <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Последняя</div>
-                        <div class="text-lg font-bold px-2 py-0.5 rounded-md ${scoreColor}">
-                            ${latestWork.score} б.
-                        </div>
+                        <div class="text-lg font-bold px-2 py-0.5 rounded-md ${scoreColor}">${latestWork.score} б.</div>
                     </div>
                 </div>
 
                 <div id="details-${cid}" class="hidden border-t border-gray-700 bg-gray-900/50 p-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-gray-800 border border-gray-700 rounded-lg p-2 h-48 relative">
-                            <canvas id="chart-${cid}"></canvas>
+                        
+                        <div class="flex flex-col">
+                            <div class="flex bg-gray-800 rounded-lg p-1 border border-gray-700 mb-2 gap-1">
+                                <button onclick="switchChart('${cid}', 'total')" class="flex-1 text-[10px] uppercase font-bold py-1.5 rounded bg-blue-600 text-white transition-colors" id="btn-${cid}-total">Общий</button>
+                                <button onclick="switchChart('${cid}', 'content')" class="flex-1 text-[10px] uppercase font-bold py-1.5 rounded text-gray-400 hover:bg-gray-700 transition-colors" id="btn-${cid}-content">Смысл</button>
+                                <button onclick="switchChart('${cid}', 'literacy')" class="flex-1 text-[10px] uppercase font-bold py-1.5 rounded text-gray-400 hover:bg-gray-700 transition-colors" id="btn-${cid}-literacy">Орфо</button>
+                            </div>
+                            <div class="bg-gray-800 border border-gray-700 rounded-lg p-2 h-40 relative">
+                                <canvas id="chart-${cid}"></canvas>
+                            </div>
                         </div>
                         
-                        <div class="h-48 overflow-y-auto pr-2 space-y-2">
-                            ${student.works.map((w, i) => {
-                                const errPreview = w.errors.length > 0 ? w.errors[0].substring(0, 50) + '...' : 'Ошибок не найдено ✅';
-                                return `
-                                <div class="bg-gray-800 p-3 rounded-lg border-l-2 ${w.score > 15 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center gap-2">
-                                    <div class="text-xs text-gray-300 truncate w-full">${errPreview}</div>
-                                    <div class="text-sm font-bold text-white whitespace-nowrap">${w.score} б.</div>
-                                </div>
-                                `;
-                            }).join('')}
+                        <div class="flex flex-col h-full">
+                            <div class="h-32 overflow-y-auto pr-2 space-y-2 mb-3">
+                                ${student.works.map((w, i) => `
+                                    <div class="bg-gray-800 p-2.5 rounded-lg border-l-2 ${w.score > 15 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center gap-2">
+                                        <div class="text-xs text-gray-300 truncate w-full">${w.aiComment.split('\n')[0].substring(0, 40)}...</div>
+                                        <div class="text-sm font-bold text-white whitespace-nowrap">${w.score} б.</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button onclick="openModal('${cid}', 0)" class="w-full mt-auto bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded-lg text-sm border border-gray-600 transition-colors flex justify-center items-center gap-2">
+                                🔍 Открыть последний разбор
+                            </button>
                         </div>
+
                     </div>
                 </div>
             `;
             list.appendChild(card);
 
-            // Инициализация графика (Сохраняем функцию в глобальный объект для вызова при открытии)
             charts[cid] = {
                 initialized: false,
-                labels: labelsForChart,
-                data: scoresForChart
+                labels: labels,
+                datasets: datasets,
+                instance: null
             };
         });
     }
 
-    // 5. Логика аккордеона и ленивой загрузки графиков
+    // Переключение данных на графике
+    function switchChart(cid, type) {
+        const chartObj = charts[cid];
+        if (!chartObj || !chartObj.instance) return;
+
+        // Визуальное переключение кнопок
+        ['total', 'content', 'literacy'].forEach(t => {
+            const btn = document.getElementById(`btn-${cid}-${t}`);
+            if (t === type) {
+                btn.classList.add('bg-blue-600', 'text-white');
+                btn.classList.remove('text-gray-400', 'hover:bg-gray-700');
+            } else {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('text-gray-400', 'hover:bg-gray-700');
+            }
+        });
+
+        // Смена данных
+        let newData, label, color;
+        if (type === 'total') { newData = chartObj.datasets.total; label = 'Общий балл'; color = '#3b82f6'; }
+        if (type === 'content') { newData = chartObj.datasets.content; label = 'Содержание (СК/К1-6)'; color = '#10b981'; }
+        if (type === 'literacy') { newData = chartObj.datasets.literacy; label = 'Грамотность (ГК/К7-10)'; color = '#f43f5e'; }
+
+        chartObj.instance.data.datasets[0].data = newData;
+        chartObj.instance.data.datasets[0].label = label;
+        chartObj.instance.data.datasets[0].borderColor = color;
+        chartObj.instance.data.datasets[0].backgroundColor = color + '20'; // прозрачный фон
+        chartObj.instance.update();
+    }
+
     function toggleDetails(cid, index) {
         const el = document.getElementById(`details-${cid}`);
         el.classList.toggle('hidden');
 
-        // Рисуем график только когда плашка открывается первый раз
         if (!el.classList.contains('hidden') && charts[cid] && !charts[cid].initialized) {
             const ctx = document.getElementById(`chart-${cid}`).getContext('2d');
-            new Chart(ctx, {
+            charts[cid].instance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: charts[cid].labels,
                     datasets: [{
-                        label: 'Баллы',
-                        data: charts[cid].data,
+                        label: 'Общий балл',
+                        data: charts[cid].datasets.total,
                         borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        backgroundColor: '#3b82f620',
                         borderWidth: 2,
                         pointBackgroundColor: '#60a5fa',
-                        tension: 0.4,
+                        tension: 0.3,
                         fill: true
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af', stepSize: 5 } },
+                        y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
                         x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
                     }
                 }
@@ -291,11 +356,40 @@
         }
     }
 
-    // Запуск
-    window.onload = () => {
-        loadData();
-        setInterval(loadData, 15000); // Автообновление каждые 15 сек
-    };
+    // ЛОГИКА МОДАЛЬНОГО ОКНА
+    function openModal(cid, workIndex) {
+        const student = window.GlobalStudentsData[cid];
+        const work = student.works[workIndex];
+        
+        document.getElementById('modal-title').innerText = `${student.name} • ${student.exam}`;
+        document.getElementById('modal-score').innerText = work.score;
+        
+        const critContainer = document.getElementById('modal-criteria');
+        critContainer.innerHTML = '';
+        for (let [crit, val] of Object.entries(work.criteria)) {
+            critContainer.innerHTML += `
+                <div class="bg-gray-700/50 border border-gray-600 p-2 text-center rounded-lg">
+                    <div class="text-[10px] text-gray-400 font-bold mb-1">${crit}</div>
+                    <div class="text-lg font-black text-white">${val}</div>
+                </div>
+            `;
+        }
+
+        document.getElementById('modal-ai-comment').innerText = work.aiComment;
+        document.getElementById('modal-text').innerHTML = work.markedText; // innerHTML для обработки тегов <b>
+
+        const modal = document.getElementById('work-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('work-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    window.onload = () => { loadData(); setInterval(loadData, 15000); };
 </script>
 
 </body>
