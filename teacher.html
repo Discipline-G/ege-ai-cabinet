@@ -95,6 +95,7 @@
             <div>
               <div class="text-sm font-bold text-slate-800 dark:text-white" id="corp-name">Класс</div>
               <div class="text-xs text-slate-500 dark:text-gray-400">Код: <span id="corp-code">—</span></div>
+              <div class="text-[11px] text-slate-400 dark:text-gray-500 mt-1">Подключено учеников: <span id="corp-members">0</span></div>
             </div>
             <div class="text-right">
               <div class="text-2xl font-black text-indigo-600 dark:text-indigo-300" id="corp-checks">0</div>
@@ -294,6 +295,8 @@
       document.getElementById('corp-name').innerText = corporate.name || 'Корпоративный класс';
       document.getElementById('corp-code').innerText = corporate.code || '—';
       document.getElementById('corp-checks').innerText = Number(corporate.checks_remaining || 0).toLocaleString('ru-RU');
+      const membersEl = document.getElementById('corp-members');
+      if (membersEl) membersEl.innerText = Number(corporate.members_count || 0).toLocaleString('ru-RU');
     }
 
     function copyCode() {
