@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ПРОВЕРЯЙ | Оплата</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-5 text-slate-900">
+  <div class="max-w-md w-full bg-white rounded-3xl p-6 shadow-xl border border-slate-100 text-center">
+    <div class="text-4xl mb-3">💳</div>
+    <h1 class="text-2xl font-black mb-2">Оплата скоро будет доступна</h1>
+    <p class="text-sm text-slate-500 leading-relaxed mb-5">
+      Мы уже записали заявку, если backend оплаты подключен. Пока эквайринг подключается, оплату можно провести вручную через поддержку.
+    </p>
+
+    <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-left mb-5">
+      <div class="text-xs uppercase font-bold text-blue-500 mb-1">Данные заявки</div>
+      <div class="text-sm text-slate-500">Номер: <span id="request-id" class="font-black text-blue-700">—</span></div>
+      <div class="text-sm text-slate-500">Тип: <span id="kind" class="font-black text-blue-700">—</span></div>
+      <div class="text-sm text-slate-500">Тариф: <span id="package-id" class="font-black text-blue-700">—</span></div>
+      <div class="text-sm text-slate-500">Сумма: <span id="amount" class="font-black text-blue-700">—</span></div>
+    </div>
+
+    <a href="https://t.me/ru_repetitor_bot" class="block w-full bg-blue-600 text-white font-bold py-4 rounded-2xl active:scale-[0.98] transition">
+      Написать в поддержку
+    </a>
+
+    <p class="text-[11px] text-slate-400 mt-4">
+      После подключения эквайринга эта страница будет заменена на платежную форму.
+    </p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+
+    document.getElementById('request-id').innerText = params.get('request_id') || 'не указан';
+    document.getElementById('kind').innerText = params.get('kind') || 'не указан';
+    document.getElementById('package-id').innerText = params.get('package_id') || 'не указан';
+
+    const amount = params.get('amount');
+    document.getElementById('amount').innerText = amount ? `${Number(amount).toLocaleString('ru-RU')} ₽` : 'не указана';
+  </script>
+</body>
+</html>
