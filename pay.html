@@ -21,6 +21,26 @@
       <div class="text-sm text-slate-500">Тариф: <span id="package-id" class="font-black text-blue-700">—</span></div>
       <div class="text-sm text-slate-500">Сумма: <span id="amount" class="font-black text-blue-700">—</span></div>
     </div>
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left mb-5">
+      <div class="text-xs uppercase font-bold text-slate-500 mb-2">Юридические условия</div>
+      <label class="flex items-start gap-2 text-[11px] text-slate-600 leading-relaxed mb-2">
+        <input type="checkbox" class="legal-check mt-0.5" checked>
+        <span>Я принимаю <a href="offer.html" target="_blank" class="text-blue-600 underline">оферту</a>, <a href="user-agreement.html" target="_blank" class="text-blue-600 underline">пользовательское соглашение</a> и <a href="refund-rules.html" target="_blank" class="text-blue-600 underline">правила оплаты, списаний и возвратов</a>.</span>
+      </label>
+      <label class="flex items-start gap-2 text-[11px] text-slate-600 leading-relaxed mb-2">
+        <input type="checkbox" class="legal-check mt-0.5" checked>
+        <span>Я согласен(на) на обработку персональных данных по <a href="privacy-policy.html" target="_blank" class="text-blue-600 underline">политике ПДн</a> и <a href="personal-data-consent.html" target="_blank" class="text-blue-600 underline">согласию на обработку ПДн</a>.</span>
+      </label>
+      <label class="flex items-start gap-2 text-[11px] text-slate-600 leading-relaxed mb-2">
+        <input type="checkbox" class="legal-check mt-0.5" checked>
+        <span>Я понимаю, что ИИ-разбор носит учебный и ориентировочный характер, может содержать ошибки и не является официальной оценкой. <a href="ai-disclaimer.html" target="_blank" class="text-blue-600 underline">Дисклеймер ИИ-проверки</a>.</span>
+      </label>
+      <label class="flex items-start gap-2 text-[11px] text-slate-600 leading-relaxed">
+        <input type="checkbox" class="legal-check mt-0.5" checked>
+        <span>Если пользователь несовершеннолетний, подтверждаю наличие согласия родителя/законного представителя на использование сервиса, обработку данных и платные функции.</span>
+      </label>
+    </div>
+
 
     <a href="https://t.me/ru_repetitor_bot" class="block w-full bg-blue-600 text-white font-bold py-4 rounded-2xl active:scale-[0.98] transition">
       Написать в поддержку
@@ -40,6 +60,16 @@
 
     const amount = params.get('amount');
     document.getElementById('amount').innerText = amount ? `${Number(amount).toLocaleString('ru-RU')} ₽` : 'не указана';
+
+    const legalChecks = Array.from(document.querySelectorAll('.legal-check'));
+    const supportBtn = document.querySelector('a[href="https://t.me/ru_repetitor_bot"]');
+    function syncLegalButton() {
+      const ok = legalChecks.every(input => input.checked);
+      supportBtn.classList.toggle('opacity-50', !ok);
+      supportBtn.classList.toggle('pointer-events-none', !ok);
+    }
+    legalChecks.forEach(input => input.addEventListener('change', syncLegalButton));
+    syncLegalButton();
   </script>
 </body>
 </html>
