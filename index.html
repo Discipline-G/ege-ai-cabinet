@@ -259,12 +259,13 @@
     // Одним вечером скидки убираются здесь:
     const DISCOUNT_ACTIVE = true;
 
-    const PURCHASE_REQUEST_URL = 'https://45.131.183.101.sslip.io/webhook/create-purchase-request';
-    const PAYMENT_STUB_URL = 'https://discipline-g.github.io/ege-ai-cabinet/Pay.html';
+    const PURCHASE_REQUEST_URL = 'https://85.239.39.128.sslip.io/webhook/create-purchase-request';
+    const PAYMENT_STUB_URL = 'https://discipline-g.github.io/ege-ai-cabinet/pay.html';
     const SUPPORT_URL = 'https://t.me/ru_repetitor_bot';
 
     const chatId = tg.initDataUnsafe?.user?.id || '123456789';
-    const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-user-data?chat_id=${chatId}`.trim();
+    const tgInitData = window.Telegram?.WebApp?.initData || '';
+    const WEBHOOK_URL = `https://85.239.39.128.sslip.io/webhook/get-user-data?chat_id=${encodeURIComponent(chatId)}&tg_init_data=${encodeURIComponent(tgInitData)}`.trim();
 
     const studentTariffs = {
       week_3: {
@@ -580,11 +581,12 @@
       const tariff = studentTariffs[selectedPackage] || studentTariffs.sprint_5;
       const params = new URLSearchParams({
         chat_id: String(chatId),
+        tg_init_data: tgInitData,
         kind: 'student',
         package_id: selectedPackage
       });
 
-      let payUrl = `${PAYMENT_STUB_URL}?kind=student&package_id=${encodeURIComponent(selectedPackage)}&amount=${currentPrice(tariff)}`;
+      let payUrl = `${PAYMENT_STUB_URL}?kind=student&package_id=${encodeURIComponent(selectedPackage)}&amount=${currentPrice(tariff)}&chat_id=${encodeURIComponent(chatId)}`;
 
       try {
         const res = await fetch(`${PURCHASE_REQUEST_URL}?${params.toString()}`);
