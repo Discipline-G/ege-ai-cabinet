@@ -196,11 +196,12 @@
     // Одним вечером скидки убираются здесь:
     const DISCOUNT_ACTIVE = true;
 
-    const PURCHASE_REQUEST_URL = 'https://45.131.183.101.sslip.io/webhook/create-purchase-request';
-    const PAYMENT_STUB_URL = 'https://discipline-g.github.io/ege-ai-cabinet/Pay.html';
+    const PURCHASE_REQUEST_URL = 'https://85.239.39.128.sslip.io/webhook/create-purchase-request';
+    const PAYMENT_STUB_URL = 'https://discipline-g.github.io/ege-ai-cabinet/pay.html';
 
     const teacherId = tg.initDataUnsafe?.user?.id || 'TEST_MODE';
-    const WEBHOOK_URL = `https://45.131.183.101.sslip.io/webhook/get-essays?teacher_id=${teacherId}`;
+    const tgInitData = window.Telegram?.WebApp?.initData || '';
+    const WEBHOOK_URL = `https://85.239.39.128.sslip.io/webhook/get-essays?teacher_id=${encodeURIComponent(teacherId)}&tg_init_data=${encodeURIComponent(tgInitData)}`;
 
     const corporateTariffs = {
       corp_100: {
@@ -338,11 +339,13 @@
 
       const params = new URLSearchParams({
         chat_id: String(teacherId),
+        teacher_id: String(teacherId),
+        tg_init_data: tgInitData,
         kind: 'corporate',
         package_id: packageId
       });
 
-      let payUrl = `${PAYMENT_STUB_URL}?kind=corporate&package_id=${encodeURIComponent(packageId)}&amount=${currentPrice(tariff)}`;
+      let payUrl = `${PAYMENT_STUB_URL}?kind=corporate&package_id=${encodeURIComponent(packageId)}&amount=${currentPrice(tariff)}&teacher_id=${encodeURIComponent(teacherId)}`;
 
       try {
         const res = await fetch(`${PURCHASE_REQUEST_URL}?${params.toString()}`);
