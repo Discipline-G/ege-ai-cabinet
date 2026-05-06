@@ -1,75 +1,70 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ПРОВЕРЯЙ | Оплата</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Оплата сервиса «ПРОВЕРЯЙ» — ПРОВЕРЯЙ</title>
+  <style>
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f8fafc;color:#0f172a;line-height:1.6}
+    .wrap{max-width:920px;margin:0 auto;padding:24px 16px 56px}
+    .card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 8px 30px rgba(15,23,42,.06);padding:28px}
+    .back{display:inline-flex;margin-bottom:16px;color:#2563eb;text-decoration:none;font-weight:700}
+    h1{margin:0 0 8px;font-size:30px;line-height:1.18}
+    h2{margin:30px 0 10px;font-size:21px;border-top:1px solid #e2e8f0;padding-top:22px}
+    p,li{font-size:16px} ul,ol{padding-left:22px}
+    .lead,.meta,.footer{color:#64748b} .lead{font-size:17px;margin:0 0 18px} .meta{font-size:14px;margin:8px 0 24px}
+    .notice{background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 16px;margin:16px 0}
+    .warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px 16px;margin:16px 0}
+    table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px} td,th{border:1px solid #e2e8f0;padding:10px;text-align:left;vertical-align:top}
+    a{color:#2563eb} .footer{margin-top:28px;font-size:14px}
+    @media(max-width:640px){.card{padding:20px;border-radius:16px}h1{font-size:25px}h2{font-size:19px}}
+  </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-5 text-slate-900">
-  <div class="max-w-md w-full bg-white rounded-3xl p-6 shadow-xl border border-slate-100 text-center">
-    <div class="text-4xl mb-3">💳</div>
-    <h1 class="text-2xl font-black mb-2">Оплата скоро будет доступна</h1>
-    <p class="text-sm text-slate-500 leading-relaxed mb-5">
-      Мы уже записали заявку, если backend оплаты подключен. Пока эквайринг подключается, оплату можно провести вручную через поддержку.
-    </p>
+<body>
+  <main class="wrap">
+    <a class="back" href="./index.html">← Вернуться в кабинет</a>
+    <article class="card">
+      <h1>Оплата сервиса «ПРОВЕРЯЙ»</h1>
+      <p class="lead">Тарифы, реквизиты, ранняя оплата и юридические условия.</p>
+      <div class="meta">Дата публикации / редакции: 06.05.2026</div>
+      
+<div class="notice">Оплата через эквайринг находится на этапе подключения. Пока можно оставить заявку и получить инструкции через поддержку.</div>
+<h2>Тарифы раннего запуска</h2>
+<table><tr><th>Пакет</th><th>Цена</th><th>Срок</th></tr><tr><td>3 проверки</td><td>149 ₽</td><td>7 дней</td></tr><tr><td>5 проверок</td><td>249 ₽</td><td>15 дней</td></tr><tr><td>10 проверок</td><td>399 ₽</td><td>30 дней</td></tr><tr><td>100 корпоративных проверок</td><td>3 990 ₽</td><td>по условиям тарифа</td></tr><tr><td>300 корпоративных проверок</td><td>8 990 ₽</td><td>по условиям тарифа</td></tr><tr><td>1000 корпоративных проверок</td><td>24 900 ₽</td><td>по условиям тарифа</td></tr></table>
+<h2>Исполнитель</h2>
 
-    <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-left mb-5">
-      <div class="text-xs uppercase font-bold text-blue-500 mb-1">Данные заявки</div>
-      <div class="text-sm text-slate-500">Номер: <span id="request-id" class="font-black text-blue-700">—</span></div>
-      <div class="text-sm text-slate-500">Тип: <span id="kind" class="font-black text-blue-700">—</span></div>
-      <div class="text-sm text-slate-500">Тариф: <span id="package-id" class="font-black text-blue-700">—</span></div>
-      <div class="text-sm text-slate-500">Сумма: <span id="amount" class="font-black text-blue-700">—</span></div>
-    </div>
-    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left mb-5">
-      <div class="text-xs uppercase font-bold text-slate-500 mb-2">Юридические условия</div>
-      <label class="flex items-start gap-2 text-[11px] text-slate-600 leading-relaxed mb-2">
-        <input type="checkbox" class="legal-check mt-0.5" checked>
-        <span>Я принимаю <a href="offer.html" target="_blank" class="text-blue-600 underline">оферту</a>, <a href="user-agreement.html" target="_blank" class="text-blue-600 underline">пользовательское соглашение</a> и <a href="refund-rules.html" target="_blank" class="text-blue-600 underline">правила оплаты, списаний и возвратов</a>.</span>
-      </label>
-      <label class="flex items-start gap-2 text-[11px] text-slate-600 leading-relaxed mb-2">
-        <input type="checkbox" class="legal-check mt-0.5" checked>
-        <span>Я согласен(на) на обработку персональных данных по <a href="privacy-policy.html" target="_blank" class="text-blue-600 underline">политике ПДн</a> и <a href="personal-data-consent.html" target="_blank" class="text-blue-600 underline">согласию на обработку ПДн</a>.</span>
-      </label>
-      <label class="flex items-start gap-2 text-[11px] text-slate-600 leading-relaxed mb-2">
-        <input type="checkbox" class="legal-check mt-0.5" checked>
-        <span>Я понимаю, что ИИ-разбор носит учебный и ориентировочный характер, может содержать ошибки и не является официальной оценкой. <a href="ai-disclaimer.html" target="_blank" class="text-blue-600 underline">Дисклеймер ИИ-проверки</a>.</span>
-      </label>
-      <label class="flex items-start gap-2 text-[11px] text-slate-600 leading-relaxed">
-        <input type="checkbox" class="legal-check mt-0.5" checked>
-        <span>Если пользователь несовершеннолетний, подтверждаю наличие согласия родителя/законного представителя на использование сервиса, обработку данных и платные функции.</span>
-      </label>
-    </div>
+<table>
+<tr><th>Исполнитель</th><td>Индивидуальный предприниматель Береснев Дмитрий Владимирович</td></tr>
+<tr><th>ИНН</th><td>631813773607</td></tr>
+<tr><th>ОГРНИП</th><td>318631300162815</td></tr>
+<tr><th>Адрес регистрации</th><td>443029, г. Самара, ул. Шестая просека, д. 140, кв. 384</td></tr>
+<tr><th>Email поддержки</th><td><a href="mailto:motirnaiashina@gmail.com">motirnaiashina@gmail.com</a></td></tr>
+<tr><th>Email для юридически значимых сообщений</th><td><a href="mailto:amiddoc@yandex.ru">amiddoc@yandex.ru</a></td></tr>
+<tr><th>Telegram-бот</th><td><a href="https://t.me/ru_repetitor_bot">@ru_repetitor_bot</a></td></tr>
+<tr><th>Сайт</th><td><a href="https://discipline-g.github.io/ege-ai-cabinet/">https://discipline-g.github.io/ege-ai-cabinet/</a></td></tr>
+</table>
 
+<h2>Реквизиты для оплаты</h2>
 
-    <a href="https://t.me/ru_repetitor_bot" class="block w-full bg-blue-600 text-white font-bold py-4 rounded-2xl active:scale-[0.98] transition">
-      Написать в поддержку
-    </a>
+<table>
+<tr><th>Получатель</th><td>Индивидуальный предприниматель Береснев Дмитрий Владимирович</td></tr>
+<tr><th>ИНН получателя</th><td>631813773607</td></tr>
+<tr><th>Расчетный счет</th><td>40802810600006416392</td></tr>
+<tr><th>Банк</th><td>АО «ТБанк»</td></tr>
+<tr><th>БИК</th><td>044525974</td></tr>
+<tr><th>Корреспондентский счет</th><td>30101810145250000974</td></tr>
+</table>
 
-    <p class="text-[11px] text-slate-400 mt-4">
-      После подключения эквайринга эта страница будет заменена на платежную форму.
-    </p>
-  </div>
+<p>Рекомендуемое назначение платежа: «Оплата доступа к информационно-аналитическому сервису “ПРОВЕРЯЙ” по оферте от 06.05.2026, Telegram ID / номер заявки: ____».</p>
+<h2>Порядок ранней оплаты</h2>
+<ol><li>Выберите тариф в боте или кабинете.</li><li>Оставьте заявку на оплату.</li><li>Получите инструкцию от поддержки или администратора.</li><li>После подтверждения оплаты проверки начисляются на баланс.</li></ol>
+<h2>Юридические условия</h2>
+<ul><li><a href="./offer.html">Публичная оферта</a></li><li><a href="./user-agreement.html">Пользовательское соглашение</a></li><li><a href="./privacy-policy.html">Политика ПДн</a></li><li><a href="./personal-data-consent.html">Согласие ПДн</a></li><li><a href="./ai-disclaimer.html">Дисклеймер ИИ</a></li><li><a href="./refund-rules.html">Возвраты</a></li><li><a href="./corporate-terms.html">Корпоративные условия</a></li></ul>
+<h2>Поддержка</h2>
+<p>По вопросам оплаты: <a href="mailto:motirnaiashina@gmail.com">motirnaiashina@gmail.com</a> или команда /support в Telegram-боте <a href="https://t.me/ru_repetitor_bot">@ru_repetitor_bot</a>.</p>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-
-    document.getElementById('request-id').innerText = params.get('request_id') || 'не указан';
-    document.getElementById('kind').innerText = params.get('kind') || 'не указан';
-    document.getElementById('package-id').innerText = params.get('package_id') || 'не указан';
-
-    const amount = params.get('amount');
-    document.getElementById('amount').innerText = amount ? `${Number(amount).toLocaleString('ru-RU')} ₽` : 'не указана';
-
-    const legalChecks = Array.from(document.querySelectorAll('.legal-check'));
-    const supportBtn = document.querySelector('a[href="https://t.me/ru_repetitor_bot"]');
-    function syncLegalButton() {
-      const ok = legalChecks.every(input => input.checked);
-      supportBtn.classList.toggle('opacity-50', !ok);
-      supportBtn.classList.toggle('pointer-events-none', !ok);
-    }
-    legalChecks.forEach(input => input.addEventListener('change', syncLegalButton));
-    syncLegalButton();
-  </script>
+      <div class="footer">© 2026 Сервис ПРОВЕРЯЙ</div>
+    </article>
+  </main>
 </body>
 </html>
