@@ -106,15 +106,15 @@
 
         <div class="mb-3">
           <div id="corp-discount-label" class="inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg">
-            Скидка раннего запуска
+            Корпоративные пакеты
           </div>
         </div>
 
         <div id="corporate-tariffs" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
         <p id="corporate-legal-note" class="text-[10px] text-slate-400 dark:text-gray-500 mt-3 leading-relaxed">
-          Покупая корпоративный пакет, вы принимаете <a href="corporate-terms.html" target="_blank" class="underline">корпоративные условия</a>,
+          Покупая корпоративный пакет и приглашая учеников, вы принимаете <a href="corporate-terms.html" target="_blank" class="underline">корпоративные условия</a>,
           <a href="offer.html" target="_blank" class="underline">оферту</a>,
-          <a href="privacy-policy.html" target="_blank" class="underline">политику ПДн</a> и подтверждаете наличие необходимых согласий учеников/законных представителей.
+          <a href="privacy-policy.html" target="_blank" class="underline">политику ПДн</a> и подтверждаете, что имеете право подключать учеников и получили необходимые согласия учеников/законных представителей.
         </p>
       </section>
 
@@ -161,16 +161,16 @@
         </div>
 
         <div class="mb-6">
-          <h4 class="text-[10px] font-bold text-slate-400 dark:text-gray-400 uppercase mb-2">Разбалловка по ФИПИ</h4>
+          <h4 class="text-[10px] font-bold text-slate-400 dark:text-gray-400 uppercase mb-2">Критерии проверки</h4>
           <div id="modal-criteria" class="grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
         </div>
 
         <div class="mb-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-600/30 p-3 rounded-xl">
-          <h4 class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase mb-2 leading-none">👨‍🏫 План действий</h4>
+          <h4 class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase mb-2 leading-none">👨‍🏫 Что обсудить с учеником</h4>
           <ul class="text-sm text-purple-800 dark:text-purple-200/80 list-disc pl-5 space-y-1">
-            <li>Разберите с учеником подсвеченные ошибки в тексте.</li>
-            <li>Если проседает <b>Грамотность</b>, выдайте короткие тесты.</li>
-            <li>Если страдает <b>Содержание</b>, проработайте логику и аргументацию.</li>
+            <li>Сверьте подсвеченные места с оригиналом работы: часть замечаний может зависеть от OCR.</li>
+            <li>Если проседает <b>Грамотность</b>, дайте короткую тренировку на конкретный тип ошибок.</li>
+            <li>Если страдает <b>Содержание</b>, отдельно разберите тезис, примеры, пояснения и вывод.</li>
           </ul>
         </div>
 
@@ -193,11 +193,10 @@
 
     if (tg.expand) tg.expand();
 
-    // Одним вечером скидки убираются здесь:
-    const DISCOUNT_ACTIVE = true;
+    const DISCOUNT_ACTIVE = false;
 
     const PURCHASE_REQUEST_URL = 'https://85.239.39.128.sslip.io/webhook/create-purchase-request';
-    const PAYMENT_STUB_URL = 'https://discipline-g.github.io/ege-ai-cabinet/pay.html';
+    const PAYMENT_STUB_URL = 'https://proveryay.ru/pay.html';
 
     const teacherId = tg.initDataUnsafe?.user?.id || 'TEST_MODE';
     const tgInitData = window.Telegram?.WebApp?.initData || '';
@@ -208,7 +207,7 @@
         title: 'Класс Старт',
         checks: 100,
         regularPrice: 5990,
-        salePrice: 3990,
+        salePrice: 5990,
         note: 'Для 1–2 классов или пробного запуска',
         badge: ''
       },
@@ -216,7 +215,7 @@
         title: 'Параллель',
         checks: 300,
         regularPrice: 12900,
-        salePrice: 8990,
+        salePrice: 12900,
         note: 'Оптимально для школы перед экзаменом',
         badge: 'Хит для школы'
       },
@@ -224,7 +223,7 @@
         title: 'Школа',
         checks: 1000,
         regularPrice: 34900,
-        salePrice: 24900,
+        salePrice: 34900,
         note: 'Для крупного запуска по нескольким классам',
         badge: ''
       }
@@ -273,7 +272,7 @@
       const root = document.getElementById('corporate-tariffs');
       const discountLabel = document.getElementById('corp-discount-label');
 
-      discountLabel.innerText = DISCOUNT_ACTIVE ? 'Скидка раннего запуска до экзамена' : 'Актуальные корпоративные тарифы';
+      discountLabel.innerText = DISCOUNT_ACTIVE ? 'Корпоративные пакеты' : 'Корпоративные пакеты';
 
       root.innerHTML = Object.entries(corporateTariffs).map(([packageId, tariff]) => {
         const isHit = packageId === 'corp_300';
@@ -283,7 +282,7 @@
             ${isHit ? '<div class="absolute -right-5 -top-5 w-16 h-16 bg-indigo-100 dark:bg-indigo-500/20 rounded-full"></div>' : ''}
             <div class="relative z-10">
               <div class="font-black text-slate-800 dark:text-white">${tariff.title}</div>
-              <div class="text-xs text-slate-500 dark:text-gray-400 mt-1">${tariff.checks.toLocaleString('ru-RU')} несгорающих проверок</div>
+              <div class="text-xs text-slate-500 dark:text-gray-400 mt-1">${tariff.checks.toLocaleString('ru-RU')} проверок для класса</div>
               <div class="text-[11px] text-slate-400 dark:text-gray-500 mt-1 leading-snug">${tariff.note}</div>
               ${tariff.badge ? `<div class="inline-block text-[9px] font-bold uppercase bg-indigo-500 text-white px-1.5 py-0.5 rounded mt-2">${tariff.badge}</div>` : ''}
               ${priceHtml(tariff)}
