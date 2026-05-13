@@ -200,12 +200,12 @@
     <div class="space-y-4 text-sm text-gray-600 leading-relaxed">
       <div>
         <div class="font-bold text-gray-900 mb-1">Что такое проверка?</div>
-        <div>Одна проверка — это полный разбор одного сочинения: распознавание текста, оценка по критериям ОГЭ/ЕГЭ, подсветка ошибок и рекомендации.</div>
+        <div>Одна проверка — это учебный разбор одного чистового сочинения: распознавание текста, ориентировочная оценка, вероятные ошибки и рекомендации.</div>
       </div>
 
       <div>
         <div class="font-bold text-gray-900 mb-1">Что входит в проверку?</div>
-        <div>ИИ оценивает работу по критериям ФИПИ, показывает общий балл, слабые места, ошибки в тексте и помогает составить план исправления.</div>
+        <div>ИИ учебно проверяет работу по экзаменационным критериям, показывает ориентировочный балл, слабые места, вероятные ошибки и помогает получить краткую карту следующей работы.</div>
       </div>
 
       <div>
@@ -219,8 +219,18 @@
       </div>
 
       <div>
+        <div class="font-bold text-gray-900 mb-1">Какие ограничения у одной проверки?</div>
+        <div>ОГЭ — до 350 слов. ЕГЭ beta — до 450 слов. Фото — до 4 изображений за один раз. Отправляйте только чистовую работу без задания, черновиков и повторов.</div>
+      </div>
+
+      <div>
+        <div class="font-bold text-gray-900 mb-1">Почему ЕГЭ beta?</div>
+        <div>Для полноценной проверки ЕГЭ нужен исходный текст задания. Если отправлено только сочинение, критерии, связанные с исходным текстом, оцениваются ориентировочно.</div>
+      </div>
+
+      <div>
         <div class="font-bold text-gray-900 mb-1">Сколько сочинений реально писать?</div>
-        <div>Обычно достаточно 2–3 работ в неделю. Поэтому главный тариф — 5 проверок на 15 дней.</div>
+        <div>Обычно достаточно 2–3 работ в неделю. Поэтому основной пакет — 5 проверок на 15 дней.</div>
       </div>
 
       <div>
@@ -230,7 +240,7 @@
 
       <div>
         <div class="font-bold text-gray-900 mb-1">Можно ли проверять ОГЭ и ЕГЭ?</div>
-        <div>Да. Экзамен выбирается в боте, а проверка идет по соответствующим критериям.</div>
+        <div>Да. ОГЭ проверяется в основном режиме. ЕГЭ работает в учебном beta-режиме: для максимальной точности лучше отправлять исходный текст задания и само сочинение.</div>
       </div>
 
       <div>
@@ -256,11 +266,10 @@
 
     if (tg.expand) tg.expand();
 
-    // Одним вечером скидки убираются здесь:
-    const DISCOUNT_ACTIVE = true;
+    const DISCOUNT_ACTIVE = false;
 
     const PURCHASE_REQUEST_URL = 'https://85.239.39.128.sslip.io/webhook/create-purchase-request';
-    const PAYMENT_STUB_URL = 'https://discipline-g.github.io/ege-ai-cabinet/pay.html';
+    const PAYMENT_STUB_URL = 'https://proveryay.ru/pay.html';
     const SUPPORT_URL = 'https://t.me/ru_repetitor_bot';
 
     const chatId = tg.initDataUnsafe?.user?.id || '123456789';
@@ -273,7 +282,7 @@
         checks: 3,
         days: 7,
         regularPrice: 199,
-        salePrice: 149,
+        salePrice: 199,
         subtitle: 'Одна учебная неделя',
         note: 'Написал → проверил → исправил',
         badge: ''
@@ -283,7 +292,7 @@
         checks: 5,
         days: 15,
         regularPrice: 299,
-        salePrice: 249,
+        salePrice: 299,
         subtitle: 'Оптимально до экзамена',
         note: '2–3 сочинения в неделю без перегруза',
         badge: 'Хит'
@@ -293,7 +302,7 @@
         checks: 10,
         days: 30,
         regularPrice: 499,
-        salePrice: 399,
+        salePrice: 499,
         subtitle: 'Спокойная подготовка',
         note: 'Закрыть слабые места перед экзаменом',
         badge: 'PRO'
@@ -329,7 +338,7 @@
 
     function renderTariffs() {
       document.getElementById('discount-label').innerText = DISCOUNT_ACTIVE
-        ? 'Скидка раннего запуска до экзамена'
+        ? 'Актуальные тарифы'
         : 'Актуальные тарифы';
 
       const list = document.getElementById('tariff-list');
@@ -472,7 +481,9 @@
 
         history.forEach(item => {
           const score = Number(item.score) || 0;
-          const scoreColor = score > 15 ? 'text-green-500' : (score > 10 ? 'text-yellow-500' : 'text-red-500');
+          const exam = String(item.exam_type || item.examType || item.exam || '').toLowerCase();
+          const maxScore = exam === 'ege' ? 22 : 20;
+          const scoreColor = score >= Math.round(maxScore * 0.75) ? 'text-green-500' : (score >= Math.round(maxScore * 0.5) ? 'text-yellow-500' : 'text-red-500');
 
           historyList.innerHTML += `
             <div class="flex justify-between items-center py-3">
@@ -480,7 +491,7 @@
                 <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] opacity-70">📄</div>
                 <span class="text-gray-600 font-medium text-sm">Работа от ${item.date || 'Недавно'}</span>
               </div>
-              <span class="font-black ${scoreColor} text-lg bg-gray-50 px-2 py-0.5 rounded-lg">${score} <span class="text-[10px] text-gray-400">/22</span></span>
+              <span class="font-black ${scoreColor} text-lg bg-gray-50 px-2 py-0.5 rounded-lg">${score} <span class="text-[10px] text-gray-400">/${maxScore}</span></span>
             </div>
           `;
         });
