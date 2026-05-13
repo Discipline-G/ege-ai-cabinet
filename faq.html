@@ -1,177 +1,63 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ПРОВЕРЯЙ — FAQ и руководство пользователя</title>
-  <meta name="description" content="Краткое руководство пользователя и FAQ сервиса ПРОВЕРЯЙ.">
-  <style>
-    :root{--bg:#f6f7fb;--card:#fff;--text:#172033;--muted:#5f6b7a;--line:#e7eaf0;--accent:#2f6bff;--soft:#eaf0ff;--warn:#fff7e6;--ok:#edf9f1;--danger:#fff0f0}
-    *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
-    a{color:var(--accent);font-weight:700;text-decoration:none}a:hover{text-decoration:underline}
-    .page{max-width:980px;margin:0 auto;padding:28px 16px 52px}.hero,.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;margin:14px 0;box-shadow:0 8px 24px rgba(23,32,51,.06)}
-    .hero{background:linear-gradient(135deg,#fff 0%,#edf3ff 100%);border-radius:26px}.badge{display:inline-block;padding:6px 10px;background:var(--soft);color:var(--accent);border-radius:999px;font-size:13px;font-weight:800;margin-bottom:12px}
-    h1{margin:0 0 10px;font-size:34px;line-height:1.15;letter-spacing:-.03em}h2{margin:0 0 12px;font-size:23px;line-height:1.25}h3{margin:18px 0 8px;font-size:17px}p{margin:0 0 12px}.muted{color:var(--muted)}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.mini{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
-    .toc{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0;list-style:none;margin:14px 0 0}.toc a{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;color:var(--text)}
-    ul,ol{margin:8px 0 0;padding-left:22px}li{margin:5px 0}.note{border-radius:16px;padding:14px 16px;margin:12px 0;border:1px solid var(--line);background:#fff}.warn{background:var(--warn);border-color:#ffd88a}.ok{background:var(--ok);border-color:#9be2b1}.danger{background:var(--danger);border-color:#ffb3b3}
-    .cmd{display:inline-block;background:#f1f3f8;border:1px solid var(--line);border-radius:8px;padding:2px 7px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.95em}
-    details{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}summary{cursor:pointer;font-weight:800}details p,details ul{margin-top:10px}.footer{margin-top:24px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
-    @media(max-width:760px){.page{padding:18px 12px 40px}.hero{padding:22px 18px}h1{font-size:28px}.grid,.toc{grid-template-columns:1fr}}
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Инструкция и частые вопросы — ПРОВЕРЯЙ</title>
+  <meta name="description" content="Как пользоваться сервисом ПРОВЕРЯЙ и какие ограничения есть у одной проверки.">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<main class="page">
-  <section class="hero">
-    <div class="badge">ПРОВЕРЯЙ • FAQ и руководство</div>
-    <h1>Как пользоваться сервисом «ПРОВЕРЯЙ»</h1>
-    <p class="muted">Краткая инструкция для учеников, родителей и преподавателей. Сервис помогает учебно и ориентировочно разобрать сочинение ОГЭ/ЕГЭ по русскому языку: по фото или тексту.</p>
-    <div class="note warn"><strong>Важно:</strong> результат проверки — учебный ориентир. Это не официальная оценка ФИПИ, школы, учителя, эксперта или экзаменационной комиссии. OCR и ИИ могут ошибаться, спорные места лучше обсудить с преподавателем.</div>
-    <div class="grid">
-      <div class="mini"><strong>Ученику</strong><br><span class="muted">отправить сочинение, увидеть разбор, историю, баланс и дорожную карту</span></div>
-      <div class="mini"><strong>Преподавателю</strong><br><span class="muted">подключить класс, смотреть работы учеников и аналитику</span></div>
-      <div class="mini"><strong>Родителю</strong><br><span class="muted">понять условия, оплату, возвраты и ограничения ИИ-проверки</span></div>
-    </div>
-  </section>
+<body class="bg-slate-50 min-h-screen text-slate-900">
+  <main class="max-w-5xl mx-auto p-5 sm:p-8">
+    <section class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 sm:p-8">
+      <div class="flex items-center justify-between gap-4 mb-5">
+        <a href="index.html" class="text-2xl font-black text-blue-700">ПРОВЕРЯЙ</a>
+        <a href="https://t.me/ru_repetitor_bot" class="text-xs px-3 py-2 rounded-xl bg-blue-600 text-white font-bold">Открыть бота</a>
+      </div>
+      
+<nav class="flex flex-wrap gap-2 text-xs mb-6">
+  <a class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200" href="index.html">Кабинет</a>
+  <a class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200" href="faq.html">FAQ</a>
+  <a class="px-3 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100" href="pay.html">Тарифы</a>
+  <a class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200" href="teacher.html">Преподавателю</a>
+</nav>
 
-  <section class="card">
-    <h2>Быстрая навигация</h2>
-    <ul class="toc">
-      <li><a href="#start">1. Первый запуск</a></li>
-      <li><a href="#student">2. Проверка сочинения</a></li>
-      <li><a href="#result">3. Что входит в разбор</a></li>
-      <li><a href="#teacher">4. Кабинет преподавателя</a></li>
-      <li><a href="#payment">5. Оплата и проверки</a></li>
-      <li><a href="#support">6. Поддержка</a></li>
-      <li><a href="#problems">7. Частые проблемы</a></li>
-      <li><a href="#privacy">8. Данные и безопасность</a></li>
-    </ul>
-  </section>
+      <p class="text-xs font-bold uppercase tracking-wide text-blue-600 mb-2">Редакция: 10.05.2026</p>
+      <h1 class="text-3xl sm:text-4xl font-black leading-tight mb-3">Инструкция и частые вопросы</h1>
+      <p class="text-slate-600 leading-relaxed mb-8">Как пользоваться сервисом ПРОВЕРЯЙ и какие ограничения есть у одной проверки.</p>
+      <article class="prose prose-slate max-w-none text-[15px] leading-relaxed">
+        
+<div class="rounded-2xl bg-blue-50 border border-blue-100 p-4 mb-6"><p class="font-bold text-blue-800">Коротко: отправьте текст сочинения или фото чистовой работы в Telegram-бот. Сервис вернёт учебный разбор, ориентировочный балл, слабые места и краткую карту следующей работы.</p></div>
+<h2>1. Что умеет ПРОВЕРЯЙ</h2><ul><li>принимает текст сочинения или фото рукописной работы;</li><li>распознаёт текст с фото;</li><li>проверяет работу в учебном режиме по критериям ОГЭ/ЕГЭ;</li><li>показывает ориентировочный результат, вероятные ошибки и зоны роста;</li><li>создаёт краткую карту следующей работы;</li><li>сохраняет историю проверок в кабинете.</li></ul>
+<h2>2. Как отправлять работу</h2><ol><li>Откройте Telegram-бота <a class="text-blue-600 underline" href="https://t.me/ru_repetitor_bot">@ru_repetitor_bot</a>.</li><li>Выберите роль и экзамен.</li><li>Отправьте одно чистовое сочинение текстом или фото.</li><li>Дождитесь разбора.</li><li>После результата нажмите кнопку «Карта следующей работы», если нужен короткий план, что исправить перед следующей попыткой.</li></ol>
+<h2>3. Ограничения одной проверки</h2><div class="grid sm:grid-cols-2 gap-4"><div class="rounded-2xl border border-slate-200 p-4"><h3 class="font-black text-lg">ОГЭ</h3><ul><li>минимум — 70 слов;</li><li>нормальный объём — 70–250 слов;</li><li>максимум для автоматической проверки — 350 слов.</li></ul></div><div class="rounded-2xl border border-slate-200 p-4"><h3 class="font-black text-lg">ЕГЭ beta</h3><ul><li>минимум для полноценного объёма — 150 слов;</li><li>максимум для автоматической проверки — 450 слов;</li><li>для точности желательно отправлять исходный текст задания и само сочинение.</li></ul></div></div>
+<p class="mt-4">Фото: до <b>4 фото</b> за один раз. Этого достаточно даже для работы на листах А5. Отправляйте только чистовую работу: без задания, черновиков, повторов страниц и лишних материалов.</p><p>Если работа превышает лимит, проверка не запускается и не списывается. Ограничение нужно, чтобы не снижать качество проверки: слишком длинный текст повышает риск речевых, логических и пунктуационных ошибок, а также риск OCR-искажений.</p>
+<h2>4. Почему ОГЭ можно проверять без исходного текста</h2><p>Для удобства сервис не требует каждый раз прикладывать исходный текст задания. Это резко упрощает использование. При этом проверка остаётся учебной и ориентировочной: если в работе есть фактическое место, связанное с исходным текстом, спорный вывод лучше сверить с учителем.</p>
+<h2>5. Почему ЕГЭ помечен как beta</h2><p>Для полноценной проверки ЕГЭ по заданию 27 эксперт должен видеть исходный текст, формулировку задания и само сочинение. Если пользователь отправляет только сочинение, сервис может оценить структуру, речь, грамотность и общую логику, но критерии, связанные с исходным текстом, оцениваются ориентировочно.</p>
+<h2>6. Что значит качество распознавания фото</h2><p>Если работа отправлена фото, сервис сначала распознаёт текст. Почерк, наклон, тени, обрезанные строки и плохой свет могут исказить результат. Поэтому в отчёте показывается качество распознавания фото.</p>
+<h2>7. Что не стоит отправлять</h2><ul><li>гигантские тексты и работы вне экзаменационного формата;</li><li>задание, черновики и повторы страниц;</li><li>статьи из интернета, случайные тексты, код, ссылки;</li><li>голосовые, стикеры и видео вместо сочинения.</li></ul>
+<h2>8. Баланс и тарифы</h2><p>На старте ученик получает бесплатные проверки. Дополнительные проверки можно купить пакетами на странице <a class="text-blue-600 underline" href="pay.html">тарифов</a>. Проверка списывается только за обработанную работу.</p>
+<h2>9. Поддержка</h2><p>Если ограничение сработало ошибочно, не начислились проверки, возникла проблема с оплатой или результатом — напишите в боте команду <b>/support</b> и одним сообщением опишите проблему. Желательно приложить скриншот.</p>
 
-  <section class="card" id="start">
-    <h2>1. Первый запуск</h2>
-    <ol>
-      <li>Откройте Telegram-бота <a href="https://t.me/ru_repetitor_bot">ПРОВЕРЯЙ</a> и нажмите <span class="cmd">/start</span>.</li>
-      <li>Выберите роль: <strong>ученик</strong> или <strong>преподаватель</strong>.</li>
-      <li>Если вы ученик, выберите экзамен: <strong>ОГЭ</strong> или <strong>ЕГЭ</strong>.</li>
-      <li>Откройте <span class="cmd">/cabinet</span>, чтобы посмотреть баланс, историю и кабинет.</li>
-    </ol>
-    <div class="note">Команды: <span class="cmd">/start</span>, <span class="cmd">/cabinet</span>, <span class="cmd">/price</span>, <span class="cmd">/invite</span>, <span class="cmd">/name Имя Фамилия</span>, <span class="cmd">/support</span>, <span class="cmd">/help</span>, <span class="cmd">/faq</span>.</div>
-  </section>
+      </article>
+      
+<footer class="mt-10 pt-6 border-t border-slate-200 text-xs text-slate-500 leading-relaxed">
+  <p><b>ПРОВЕРЯЙ</b> — учебный информационно-аналитический сервис. Не является ФИПИ, Рособрнадзором, школой, экзаменационной комиссией или официальной проверкой.</p>
+  <p class="mt-2">Исполнитель: Индивидуальный предприниматель Береснев Дмитрий Владимирович, ИНН 631813773607, ОГРНИП 318631300162815.</p>
+  <p class="mt-2">Поддержка: <a class="underline" href="mailto:motirnaiashina@gmail.com">motirnaiashina@gmail.com</a>. Юридически значимые сообщения: <a class="underline" href="mailto:amiddoc@yandex.ru">amiddoc@yandex.ru</a>.</p>
+  <div class="flex flex-wrap gap-x-3 gap-y-1 mt-4">
+    <a class="underline" href="offer.html">Оферта</a>
+    <a class="underline" href="user-agreement.html">Соглашение</a>
+    <a class="underline" href="privacy-policy.html">Политика ПДн</a>
+    <a class="underline" href="personal-data-consent.html">Согласие ПДн</a>
+    <a class="underline" href="ai-disclaimer.html">Дисклеймер ИИ</a>
+    <a class="underline" href="refund-rules.html">Возвраты</a>
+    <a class="underline" href="corporate-terms.html">Корпоративные условия</a>
+  </div>
+  <p class="mt-4">© 2026 Сервис ПРОВЕРЯЙ</p>
+</footer>
 
-  <section class="card" id="student">
-    <h2>2. Как ученику проверить сочинение</h2>
-    <h3>Фото тетради</h3>
-    <ul>
-      <li>Сфотографируйте сочинение так, чтобы текст был резким, без теней, бликов и обрезанных строк.</li>
-      <li>Отправьте фото в бот обычным сообщением. Если работа на нескольких страницах, отправьте несколько фото.</li>
-      <li>Сервис распознает текст через OCR, затем отправит его на учебный ИИ-анализ.</li>
-    </ul>
-    <h3>Текстом</h3>
-    <ul>
-      <li>Вставьте текст сочинения одним сообщением.</li>
-      <li>Текстовая работа не проходит OCR, поэтому качество распознавания считается максимальным.</li>
-      <li>Не исправляйте работу перед отправкой, если хотите увидеть реальные ошибки.</li>
-    </ul>
-    <div class="note ok"><strong>Совет:</strong> если есть печатный текст, отправляйте текстом. Если проверяете рукопись — сделайте максимально четкое фото.</div>
-  </section>
-
-  <section class="card" id="result">
-    <h2>3. Что входит в разбор</h2>
-    <ul>
-      <li><strong>Ориентировочный балл</strong> и разбалловка по критериям.</li>
-      <li><strong>Список ошибок</strong>: орфография, пунктуация, грамматика, речь, логика и фактические замечания.</li>
-      <li><strong>Подсветка ошибок</strong> в тексте, если ошибку можно точно выделить.</li>
-      <li><strong>Индекс читаемости</strong>: насколько хорошо распознан или принят текст.</li>
-      <li><strong>Краткие рекомендации</strong> и возможная персональная дорожная карта.</li>
-    </ul>
-    <div class="note warn">ИИ может ошибиться: выделить спорное место, неверно оценить критерий или не заметить часть ошибки. Используйте разбор как тренировочный материал.</div>
-  </section>
-
-  <section class="card" id="teacher">
-    <h2>4. Кабинет преподавателя</h2>
-    <ul>
-      <li>Выберите роль <strong>преподаватель</strong> в боте.</li>
-      <li>Откройте <span class="cmd">/cabinet</span>, чтобы перейти в дашборд.</li>
-      <li>Получите ссылку для учеников или корпоративный код класса.</li>
-      <li>Ученики подключаются по ссылке вида <span class="cmd">https://t.me/ru_repetitor_bot?start=corp_CODE</span>.</li>
-      <li>В кабинете можно смотреть учеников, работы, средний результат и слабые зоны класса.</li>
-    </ul>
-    <div class="note">Если ученик подключен к классу, преподаватель может видеть его работы и аналитику. Перед подключением класса убедитесь, что ученикам и родителям это понятно.</div>
-  </section>
-
-  <section class="card" id="payment">
-    <h2>5. Проверки, тарифы и оплата</h2>
-    <p><strong>1 проверка</strong> — один автоматизированный ИИ-анализ одного сочинения.</p>
-    <h3>Ученические пакеты раннего запуска</h3>
-    <ul>
-      <li>3 проверки на 7 дней — 149 ₽ вместо 199 ₽</li>
-      <li>5 проверок на 15 дней — 249 ₽ вместо 299 ₽</li>
-      <li>10 проверок на 30 дней — 399 ₽ вместо 499 ₽</li>
-    </ul>
-    <h3>Корпоративные пакеты</h3>
-    <ul>
-      <li>100 проверок — 3 990 ₽</li>
-      <li>300 проверок — 8 990 ₽</li>
-      <li>1000 проверок — 24 900 ₽</li>
-    </ul>
-    <div class="note warn">Цены раннего запуска могут измениться для новых покупок. Уже оплаченные пакеты сохраняют условия на оплаченный период.</div>
-    <h3>Когда проверка списывается</h3>
-    <ul>
-      <li>Когда сервис принял работу и запустил анализ.</li>
-      <li>Когда пользователь отправил мусорный, слишком короткий или неподходящий текст, но система уже понесла вычислительные расходы.</li>
-    </ul>
-    <h3>Когда проверка обычно не списывается</h3>
-    <ul>
-      <li>Если фото не удалось распознать до запуска ИИ-аудита.</li>
-      <li>Если произошел подтвержденный технический сбой по вине сервиса.</li>
-    </ul>
-  </section>
-
-  <section class="card" id="support">
-    <h2>6. Поддержка</h2>
-    <p>Команда поддержки: <span class="cmd">/support</span>.</p>
-    <p>После команды бот попросит описать проблему одним сообщением. Лучше сразу написать:</p>
-    <ul>
-      <li>что произошло;</li>
-      <li>ваш Telegram username, если он есть;</li>
-      <li>что вы делали: оплата, проверка, кабинет, класс, корпоративный код;</li>
-      <li>примерное время проблемы;</li>
-      <li>скриншот, если он помогает понять ситуацию.</li>
-    </ul>
-    <div class="note ok">Чтобы обращение попало в поддержку, нажмите «Ответить» на сообщение поддержки в боте и напишите проблему.</div>
-  </section>
-
-  <section class="card" id="problems">
-    <h2>7. Частые проблемы</h2>
-    <details><summary>Бот не отвечает</summary><p>Проверьте интернет, перезапустите Telegram и отправьте <span class="cmd">/start</span>. Если не помогло, напишите в поддержку.</p></details>
-    <details><summary>Не начислились проверки после оплаты</summary><p>На раннем запуске оплата может подтверждаться вручную. Напишите <span class="cmd">/support</span>, укажите тариф, время оплаты и приложите подтверждение.</p></details>
-    <details><summary>Списалась проверка, но результата нет</summary><p>Подождите несколько минут. Если результата нет, напишите в поддержку. При подтвержденном техническом сбое проверка может быть возвращена.</p></details>
-    <details><summary>Фото плохо распознано</summary><p>Сделайте новое фото: ровно, при хорошем освещении, без бликов и обрезанных строк. Если возможно, отправьте текст вручную.</p></details>
-    <details><summary>ИИ нашел ошибку, которой нет</summary><p>Такое возможно. Проверка учебная и ориентировочная. Сверьте спорное место с преподавателем.</p></details>
-    <details><summary>Кабинет не открывается</summary><p>Откройте кабинет через кнопку в Telegram или команду <span class="cmd">/cabinet</span>. Если страница не грузится, обновите Telegram или напишите в поддержку.</p></details>
-    <details><summary>Ученик не подключился к классу</summary><p>Проверьте ссылку. Для корпоративного класса она должна быть похожа на <span class="cmd">https://t.me/ru_repetitor_bot?start=corp_CODE</span>.</p></details>
-    <details><summary>Как сменить имя для учителя?</summary><p>Отправьте команду <span class="cmd">/name Имя Фамилия</span>.</p></details>
-  </section>
-
-  <section class="card" id="privacy">
-    <h2>8. Данные и безопасность</h2>
-    <p>Сервис может обрабатывать Telegram ID, username, имя, роль, выбранный экзамен, фото или текст сочинения, распознанный текст, результаты проверки, историю работ, баланс проверок, заявки на оплату и обращения в поддержку.</p>
-    <p>Если вы отправляете фото, исходное изображение технически проходит через Telegram, workflow сервиса и OCR-провайдера. Если иное не указано в интерфейсе, сервис не предназначен для долгосрочного хранения исходных изображений, но временная техническая обработка нужна для проверки.</p>
-    <div class="note danger">Не отправляйте лишние персональные данные, сведения о здоровье, политических взглядах, религии, интимной жизни, документах, адресах и другую чувствительную информацию.</div>
-  </section>
-
-  <footer class="footer">
-    <p><strong>ПРОВЕРЯЙ</strong> — информационно-аналитический ИИ-сервис для учебной самопроверки сочинений. Не является образовательной организацией, официальным экспертом ФИПИ, школой или экзаменационной комиссией.</p>
-    <p>Документы:
-      <a href="https://discipline-g.github.io/ege-ai-cabinet/user-agreement.html">Пользовательское соглашение</a> ·
-      <a href="https://discipline-g.github.io/ege-ai-cabinet/offer.html">Оферта</a> ·
-      <a href="https://discipline-g.github.io/ege-ai-cabinet/privacy-policy.html">Политика ПДн</a> ·
-      <a href="https://discipline-g.github.io/ege-ai-cabinet/personal-data-consent.html">Согласие на ПДн</a> ·
-      <a href="https://discipline-g.github.io/ege-ai-cabinet/ai-disclaimer.html">Дисклеймер ИИ</a>
-    </p>
-    <p>Дата обновления: 04.05.2026</p>
-  </footer>
-</main>
+    </section>
+  </main>
 </body>
 </html>
