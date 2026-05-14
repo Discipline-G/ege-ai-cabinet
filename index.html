@@ -589,7 +589,6 @@
     }
 
     async function buyTariff() {
-      const tariff = studentTariffs[selectedPackage] || studentTariffs.sprint_5;
       const params = new URLSearchParams({
         chat_id: String(chatId),
         tg_init_data: tgInitData,
@@ -597,24 +596,39 @@
         package_id: selectedPackage
       });
 
-      let payUrl = `${PAYMENT_STUB_URL}?kind=student&package_id=${encodeURIComponent(selectedPackage)}&amount=${currentPrice(tariff)}&chat_id=${encodeURIComponent(chatId)}`;
-
       try {
-        const res = await fetch(`${PURCHASE_REQUEST_URL}?${params.toString()}`);
-        const data = await res.json();
+        const res = await fetch(`${PURCHASE_REQUEST_URL}?${params.toString()}`, {
+          method: 'GET',
+          cache: 'no-store'
+        });
 
-        if (data && data.pay_url) {
-          payUrl = data.pay_url;
+        const raw = await res.text();
+
+        if (!raw) {
+          throw new Error('empty_purchase_response');
         }
+
+        const data = JSON.parse(raw);
+
+        if (!res.ok || !data || !data.ok || !data.pay_url) {
+          throw new Error((data && data.error) || 'payment_url_not_created');
+        }
+
+        closeTariffs();
+
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+        openExternalLink(data.pay_url);
       } catch (e) {
         console.log('purchase request failed', e);
+
+        const message = 'Не удалось открыть оплату автоматически. Попробуйте ещё раз через минуту или напишите в поддержку.';
+        if (tg.showAlert) {
+          tg.showAlert(message);
+        } else {
+          alert(message);
+        }
       }
-
-      closeTariffs();
-
-      if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-
-      openExternalLink(payUrl);
     }
 
     function openFaq() {
