@@ -266,14 +266,9 @@
 
     if (tg.expand) tg.expand();
 
-    // tg_init_data_missing_banner_v1: outside Telegram the backend will refuse private data.
-    if (!window.Telegram?.WebApp?.initData) {
-      console.warn('Telegram WebApp initData is missing; private API calls will be rejected in production.');
-    }
-
     const DISCOUNT_ACTIVE = false;
 
-    const PURCHASE_REQUEST_URL = 'https://85.239.39.128.sslip.io/webhook/create-purchase-request';
+    const PURCHASE_REQUEST_URL = 'https://85.239.39.128.sslip.io/webhook/create-payment-direct';
     const PAYMENT_STUB_URL = 'https://proveryay.ru/pay.html';
     const SUPPORT_URL = 'https://t.me/ru_repetitor_bot';
 
@@ -317,15 +312,6 @@
     let selectedPackage = 'sprint_5';
     let trendChartInstance = null;
     let radarChartInstance = null;
-
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
 
     function formatRub(value) {
       return `${Number(value).toLocaleString('ru-RU')} ₽`;
@@ -494,8 +480,7 @@
         historyList.innerHTML = '';
 
         history.forEach(item => {
-          const score = Math.max(0, Number(item.score) || 0);
-          const safeDate = escapeHtml(item.date || 'Недавно');
+          const score = Number(item.score) || 0;
           const exam = String(item.exam_type || item.examType || item.exam || '').toLowerCase();
           const maxScore = exam === 'ege' ? 22 : 20;
           const scoreColor = score >= Math.round(maxScore * 0.75) ? 'text-green-500' : (score >= Math.round(maxScore * 0.5) ? 'text-yellow-500' : 'text-red-500');
@@ -504,7 +489,7 @@
             <div class="flex justify-between items-center py-3">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] opacity-70">📄</div>
-                <span class="text-gray-600 font-medium text-sm">Работа от ${safeDate}</span>
+                <span class="text-gray-600 font-medium text-sm">Работа от ${item.date || 'Недавно'}</span>
               </div>
               <span class="font-black ${scoreColor} text-lg bg-gray-50 px-2 py-0.5 rounded-lg">${score} <span class="text-[10px] text-gray-400">/${maxScore}</span></span>
             </div>
@@ -637,7 +622,7 @@
       } catch (e) {
         console.log('purchase request failed', e);
 
-        const message = 'Не удалось открыть оплату автоматически. Попробуйте ещё раз через минуту или напишите в поддержку.';
+        const message = `Не удалось открыть оплату автоматически. ${e && e.message ? 'Ошибка: ' + e.message + '. ' : ''}Попробуйте ещё раз или напишите в поддержку.`;
         if (tg.showAlert) {
           tg.showAlert(message);
         } else {
