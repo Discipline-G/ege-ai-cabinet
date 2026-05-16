@@ -49,7 +49,7 @@
         ПРОВЕРЯЙ
       </div>
       <button id="copy-btn" onclick="copyCode()" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-md">
-        🎁 Пригласить класс
+        🔗 Ссылка для учеников
       </button>
     </header>
 
@@ -101,6 +101,29 @@
               <div class="text-2xl font-black text-indigo-600 dark:text-indigo-300" id="corp-checks">0</div>
               <div class="text-[10px] text-slate-400 uppercase font-bold">проверок</div>
             </div>
+          </div>
+
+          <div class="mt-3 bg-white/80 dark:bg-gray-900/30 border border-indigo-100 dark:border-indigo-600/20 rounded-xl p-3">
+            <div class="text-[10px] uppercase tracking-wider font-black text-indigo-500 mb-1">Ссылка для учеников</div>
+            <div id="corp-invite-link" class="text-[11px] break-all text-slate-700 dark:text-gray-200 bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg p-2">—</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+              <button onclick="copyCode()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 rounded-lg active:scale-[0.98] transition">🔗 Скопировать ссылку</button>
+              <button onclick="copyClassInstruction()" class="bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-600/40 text-indigo-700 dark:text-indigo-200 text-xs font-bold py-2.5 rounded-lg active:scale-[0.98] transition">📩 Скопировать инструкцию</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="corp-howto" class="bg-slate-50 dark:bg-gray-900/40 border border-slate-200 dark:border-gray-700 rounded-xl p-3 mb-4">
+          <div class="text-sm font-black text-slate-800 dark:text-white mb-2">Как подключить учеников</div>
+          <ol class="text-xs text-slate-600 dark:text-gray-300 leading-relaxed list-decimal pl-4 space-y-1">
+            <li>Нажмите <b>«Ссылка для учеников»</b> или кнопку <b>«Скопировать ссылку»</b>.</li>
+            <li>Отправьте ссылку в чат класса.</li>
+            <li>Ученик открывает бота по ссылке и автоматически подключается к классу.</li>
+            <li>После подключения его проверки списываются с общего баланса класса.</li>
+            <li>Работы ученика появляются ниже в кабинете учителя.</li>
+          </ol>
+          <div class="mt-2 text-[11px] text-amber-600 dark:text-amber-300 leading-relaxed">
+            Если корпоративный пакет ещё не активен, ссылка преподавателя всё равно привяжет ученика к вам, но проверки будут списываться с его личного баланса до покупки корпоративного пакета.
           </div>
         </div>
 
