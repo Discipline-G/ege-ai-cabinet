@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/27855180/README.md)
 # ПРОВЕРЯЙ
 
 **ПРОВЕРЯЙ** — Telegram Web App и бот для учебной самопроверки сочинений ОГЭ/ЕГЭ по русскому языку.
